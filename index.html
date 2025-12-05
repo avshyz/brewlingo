@@ -401,17 +401,12 @@
     }
 
     .spectrum-items {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
       gap: 0.5rem;
 
-      &.multi-column {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-
-        @media (max-width: 500px) {
-          grid-template-columns: 1fr;
-        }
+      @media (max-width: 500px) {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -985,7 +980,7 @@
 
           <div class="spectrum">
             <div class="spectrum-title">Value Spectrum</div>
-            <div class="spectrum-items multi-column">
+            <div class="spectrum-items">
               <div class="spectrum-item">
                 <div class="spectrum-label"><i class="fa-solid fa-check"></i> Balanced</div>
                 <div class="spectrum-desc">
@@ -1074,7 +1069,7 @@
 
           <div class="spectrum">
             <div class="spectrum-title">Value Spectrum</div>
-            <div class="spectrum-items multi-column">
+            <div class="spectrum-items">
               <div class="spectrum-item">
                 <div class="spectrum-label"><i class="fa-solid fa-forward-fast"></i> Quick</div>
                 <div class="spectrum-desc">
