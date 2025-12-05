@@ -145,7 +145,19 @@
       }
 
       &.transitioning {
-        view-transition-name: card-morph;
+        view-transition-name: card-container;
+
+        .card-header {
+          view-transition-name: shared-header;
+        }
+
+        .card-icon {
+          view-transition-name: shared-icon;
+        }
+
+        .card-title {
+          view-transition-name: shared-title;
+        }
       }
 
       &[data-color="yellow"] .card-header { background: var(--yellow); }
@@ -271,7 +283,19 @@
       }
 
       &.transitioning {
-        view-transition-name: card-morph;
+        view-transition-name: card-container;
+
+        .dialog-header {
+          view-transition-name: shared-header;
+        }
+
+        .dialog-icon {
+          view-transition-name: shared-icon;
+        }
+
+        .dialog-title {
+          view-transition-name: shared-title;
+        }
       }
 
       &.opening {
@@ -335,11 +359,14 @@
     }
 
     /* View Transitions */
-    ::view-transition-old(card-morph),
-    ::view-transition-new(card-morph) {
-      animation-duration: 0.2s;
+    ::view-transition-group(card-container),
+    ::view-transition-group(shared-header),
+    ::view-transition-group(shared-icon),
+    ::view-transition-group(shared-title) {
+      animation-duration: 0.3s;
       animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
+
 
     @keyframes dialog-morph-in {
       from { opacity: 0; transform: scale(0.85); }
@@ -402,7 +429,6 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: var(--dialog-color);
     }
 
     .spectrum-desc {
@@ -521,6 +547,30 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      text-decoration: underline;
+      text-decoration-style: wavy;
+      text-decoration-color: magenta;
+      text-underline-offset: 4px;
+      background: linear-gradient(90deg, magenta, cyan);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-decoration-color: transparent;
+      text-decoration-color: transparent;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, magenta, cyan);
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 4'%3E%3Cpath d='M0 3 Q5 0 10 3 T20 3' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") repeat-x;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 4'%3E%3Cpath d='M0 3 Q5 0 10 3 T20 3' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") repeat-x;
+        mask-size: 20px 4px;
+        -webkit-mask-size: 20px 4px;
+      }
     }
 
     .qa-item {
@@ -1182,21 +1232,21 @@
       dialogHeader.style.color = 'var(--black)';
       dialog.style.setProperty('--dialog-color', dialogColor);
 
+      // Populate dialog content before transition
+      dialogIcon.innerHTML = icon;
+      dialogTitle.textContent = title;
+      dialogBody.innerHTML = content;
+
       // Use View Transitions API if available
       if (document.startViewTransition) {
-        // Add transition name to source card
+        // Card has transition name in "old" state
         card.classList.add('transitioning');
 
         const transition = document.startViewTransition(() => {
-          // Remove transition name from card, add to dialog
+          // In callback: remove from card, add to dialog
+          // This makes dialog the "new" state target
           card.classList.remove('transitioning');
           dialog.classList.add('transitioning');
-
-          // Populate dialog
-          dialogIcon.innerHTML = icon;
-          dialogTitle.textContent = title;
-          dialogBody.innerHTML = content;
-
           document.body.classList.add('dialog-open');
           dialog.showModal();
         });
@@ -1206,10 +1256,6 @@
         });
       } else {
         // Fallback for browsers without View Transitions
-        dialogIcon.innerHTML = icon;
-        dialogTitle.textContent = title;
-        dialogBody.innerHTML = content;
-
         dialog.classList.add('opening');
         document.body.classList.add('dialog-open');
         dialog.showModal();
@@ -1222,9 +1268,12 @@
 
     function closeDialog() {
       if (document.startViewTransition && activeCard) {
+        // Dialog has transition name in "old" state
         dialog.classList.add('transitioning');
 
         const transition = document.startViewTransition(() => {
+          // In callback: remove from dialog, add to card
+          // This makes card the "new" state target
           dialog.classList.remove('transitioning');
           activeCard.classList.add('transitioning');
           dialog.close();
