@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Brewlingo | Barista Reference</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap" rel="stylesheet">
@@ -55,6 +56,13 @@
       left: 0;
       right: 0;
       z-index: 9999999999;
+      transition: opacity 0.2s ease;
+
+      @media (max-width: 500px) {
+        .dialog-open & {
+          opacity: 0;
+        }
+      }
     }
 
     .marquee-content {
@@ -96,11 +104,18 @@
       position: relative;
       border-bottom: 16px solid transparent;
       border-image: url('assets/header-frill.svg') 16 round;
+      border-image-repeat: repeat;
 
-      h1 {
+      .header-inner {
         max-width: var(--view-width);
         margin: 0 auto;
         padding: 0 var(--view-padding);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      h1 {
         font-family: 'Archivo Black', sans-serif;
         font-size: clamp(1.8rem, 5vw, 3.5rem);
         font-weight: 400;
@@ -130,6 +145,11 @@
           margin-top: 0.5rem;
           font-family: 'Space Mono', monospace;
         }
+      }
+
+      .header-logo {
+        width: clamp(60px, 10vw, 100px);
+        height: auto;
       }
     }
 
@@ -716,10 +736,13 @@
   </div>
 
   <header>
-    <h1>
-      Brewlingo
-      <span>Barista Reference</span>
-    </h1>
+    <div class="header-inner">
+      <h1>
+        Brewlingo
+        <span>Barista Reference</span>
+      </h1>
+      <img src="assets/bean.svg" alt="Coffee bean" class="header-logo">
+    </div>
   </header>
 
   <div class="container">
