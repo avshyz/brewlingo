@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10-Second Tasting Grid | Barista Reference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --black: #1a1a1a;
+      --white: #f5f5f0;
+      --yellow: #ffe156;
+      --pink: #ff6b9d;
+      --blue: #4ecdc4;
+      --orange: #ff8a5c;
+      --purple: #a855f7;
+      --green: #84cc16;
+      --red: #ef4444;
+      --border: 3px solid var(--black);
+      --border-thick: 5px solid var(--black);
+    }
+
+    body {
+      font-family: 'Space Mono', monospace;
+      background-color: var(--white);
+      background-image:
+        radial-gradient(circle, var(--black) 1px, transparent 1px);
+      background-size: 20px 20px;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--yellow);
+      border: var(--border-thick);
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      box-shadow: 8px 8px 0 var(--black);
+    }
+
+    header::before {
+      content: '☕';
+      position: absolute;
+      top: -20px;
+      right: 20px;
+      font-size: 3rem;
+      transform: rotate(15deg);
+    }
+
+    header::after {
+      content: '✦';
+      position: absolute;
+      bottom: -10px;
+      left: 30px;
+      font-size: 2rem;
+    }
+
+    h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    h1 span {
+      display: block;
+      font-size: 0.4em;
+      letter-spacing: 2px;
+      margin-top: 0.5rem;
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* MASONRY GRID */
+    .grid {
+      columns: 1;
+      column-gap: 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .grid {
+        columns: 2;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .grid {
+        columns: 3;
+      }
+    }
+
+    @media (min-width: 1400px) {
+      .grid {
+        columns: 4;
+      }
+    }
+
+    /* CARDS */
+    .card {
+      break-inside: avoid;
+      background: var(--white);
+      border: var(--border-thick);
+      margin-bottom: 1.5rem;
+      position: relative;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 6px 6px 0 var(--black);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 8px 8px 0 var(--black);
+    }
+
+    .card-header {
+      padding: 1rem 1.25rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: var(--border);
+      user-select: none;
+    }
+
+    .card-icon {
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .card-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      flex-grow: 1;
+    }
+
+    .card-toggle {
+      width: 28px;
+      height: 28px;
+      border: var(--border);
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      transition: transform 0.3s ease, background 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .card.expanded .card-toggle {
+      transform: rotate(45deg);
+      background: var(--black);
+      color: var(--white);
+    }
+
+    /* PREVIEW (closed state) */
+    .card-preview {
+      padding: 1rem 1.25rem;
+    }
+
+    .card-preview-text {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+
+    .card.expanded .card-preview {
+      display: none;
+    }
+
+    /* VALUE CHIPS */
+    .value-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.5rem;
+      border: 2px solid var(--black);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: var(--white);
+    }
+
+    .chip-icon {
+      font-size: 0.8rem;
+    }
+
+    /* EXPANDED CONTENT */
+    .card-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease-out;
+    }
+
+    .card.expanded .card-content {
+      max-height: 3000px;
+      transition: max-height 0.6s ease-in;
+    }
+
+    .card-inner {
+      padding: 1rem 1.25rem;
+      border-top: var(--border);
+    }
+
+    /* FULL DESCRIPTION */
+    .full-description {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px dashed var(--black);
+    }
+
+    /* SPECTRUM */
+    .spectrum {
+      margin-bottom: 1rem;
+    }
+
+    .spectrum-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.5rem;
+      opacity: 0.7;
+    }
+
+    .spectrum-item {
+      border: var(--border);
+      margin-bottom: 0.75rem;
+      background: var(--white);
+    }
+
+    .spectrum-label {
+      padding: 0.5rem 0.75rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .spectrum-desc {
+      padding: 0.5rem 0.75rem;
+      border-top: 2px dashed var(--black);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .spectrum-cause {
+      font-size: 0.75rem;
+      font-style: italic;
+      opacity: 0.8;
+      margin-top: 0.25rem;
+    }
+
+    /* CLARIFICATIONS */
+    .clarifications {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: var(--border);
+    }
+
+    .clarifications-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .clarification {
+      font-size: 0.8rem;
+      line-height: 1.5;
+      margin-bottom: 0.5rem;
+      padding-left: 1rem;
+      position: relative;
+    }
+
+    .clarification::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+    }
+
+    .comparison {
+      background: #f0f0e8;
+      border: var(--border);
+      padding: 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .comparison-title {
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .comparison p {
+      margin-bottom: 0.25rem;
+      line-height: 1.4;
+    }
+
+    /* COLORS FOR CARDS */
+    .card[data-color="yellow"] .card-header { background: var(--yellow); }
+    .card[data-color="pink"] .card-header { background: var(--pink); }
+    .card[data-color="blue"] .card-header { background: var(--blue); }
+    .card[data-color="orange"] .card-header { background: var(--orange); }
+    .card[data-color="purple"] .card-header { background: var(--purple); color: white; }
+    .card[data-color="green"] .card-header { background: var(--green); }
+    .card[data-color="red"] .card-header { background: var(--red); color: white; }
+
+    /* Q&A SECTION */
+    .qa-section {
+      margin-top: 2rem;
+      margin-left: auto;
+      margin-right: auto;
+      background: var(--black);
+      color: var(--white);
+      border: var(--border-thick);
+      padding: 1.5rem;
+      box-shadow: 8px 8px 0 var(--yellow);
+      position: relative;
+      max-width: 700px;
+    }
+
+    .qa-section::before {
+      content: '?';
+      position: absolute;
+      top: -15px;
+      right: 30px;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--yellow);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .qa-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .qa-item {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 2px dashed rgba(255,255,255,0.3);
+    }
+
+    .qa-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .qa-question {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .qa-question::before {
+      content: 'Q';
+      background: var(--yellow);
+      color: var(--black);
+      padding: 0.1rem 0.4rem;
+      font-size: 0.7rem;
+      font-weight: 900;
+    }
+
+    .qa-answer {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      padding-left: 1.75rem;
+      opacity: 0.9;
+    }
+
+    /* DECORATIVE ELEMENTS */
+    .deco {
+      position: fixed;
+      pointer-events: none;
+      font-size: 2rem;
+      opacity: 0.15;
+      z-index: -1;
+    }
+
+    .deco-1 { top: 20%; left: 5%; transform: rotate(-15deg); }
+    .deco-2 { top: 40%; right: 3%; transform: rotate(20deg); }
+    .deco-3 { bottom: 30%; left: 8%; transform: rotate(10deg); }
+    .deco-4 { bottom: 15%; right: 10%; transform: rotate(-25deg); }
+
+    /* FOOTER */
+    footer {
+      margin-top: 2rem;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    footer span {
+      display: inline-block;
+      margin: 0 0.5rem;
+    }
+
+    /* TAP HINT */
+    .tap-hint {
+      text-align: center;
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.6;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .tap-hint::before,
+    .tap-hint::after {
+      content: '—';
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Decorative elements -->
+  <div class="deco deco-1">☕</div>
+  <div class="deco deco-2">✦</div>
+  <div class="deco deco-3">◆</div>
+  <div class="deco deco-4">○</div>
+
+  <header>
+    <h1>
+      The 10-Second Tasting Grid
+      <span>Unified Barista Reference</span>
+    </h1>
+  </header>
+
+  <div class="tap-hint">tap cards to expand</div>
+
+  <div class="grid">
+
+    <!-- 1. CLARITY -->
+    <div class="card" data-color="yellow" onclick="toggleCard(this)">
+      <div class="card-header">
+        <span class="card-icon"><i class="fa-solid fa-gem"></i></span>
+        <span class="card-title">Clarity</span>
+        <span class="card-toggle">+</span>
+      </div>
+      <div class="card-preview">
+        <div class="card-preview-text">How cleanly flavours present themselves. Influenced by extraction evenness, grind consistency, and pouring technique.</div>
+        <div class="value-chips">
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-arrow-up"></i></span> High</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span> Medium</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-arrow-down"></i></span> Low</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="card-inner">
+          <div class="full-description">
+            Clarity describes how cleanly flavours present themselves. High clarity means notes are separated and easy to identify; low clarity means muddiness or blending. Influenced by extraction evenness, grind consistency, agitation, and pouring technique.
+          </div>
+
+          <div class="spectrum">
+            <div class="spectrum-title">Value Spectrum</div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
+              <div class="spectrum-desc">
+                Clean, transparent, distinct flavours.
+                <div class="spectrum-cause">Possible causes: even extraction, good agitation, consistent grind.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+              <div class="spectrum-desc">
+                Partially blended, readable but not crisp.
+                <div class="spectrum-cause">Possible causes: mild unevenness, minor grind variability.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
+              <div class="spectrum-desc">
+                Muddy, cloudy, merged flavours.
+                <div class="spectrum-cause">Possible causes: uneven extraction, channeling, disrupted flow.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="clarifications">
+            <div class="clarifications-title"><i class="fa-solid fa-lightbulb"></i> Clarifications</div>
+            <div class="clarification">Clarity = cleanliness of flavour.</div>
+            <div class="clarification">High clarity does not guarantee definition.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. DEFINITION -->
+    <div class="card" data-color="pink" onclick="toggleCard(this)">
+      <div class="card-header">
+        <span class="card-icon"><i class="fa-solid fa-wave-square"></i></span>
+        <span class="card-title">Definition</span>
+        <span class="card-toggle">+</span>
+      </div>
+      <div class="card-preview">
+        <div class="card-preview-text">The shape of the flavour arc from beginning to middle to finish. A clean cup may still lack definition if extraction is uneven.</div>
+        <div class="value-chips">
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-arrow-up"></i></span> High</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span> Medium</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-arrow-down"></i></span> Low</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="card-inner">
+          <div class="full-description">
+            Definition is the shape of the flavour arc from beginning to middle to finish. High definition feels outlined and dimensional; low definition feels monotone or flat. A clean cup may still lack definition if extraction is uneven.
+          </div>
+
+          <div class="spectrum">
+            <div class="spectrum-title">Value Spectrum</div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
+              <div class="spectrum-desc">
+                Clear stages with distinct progression.
+                <div class="spectrum-cause">Possible causes: balanced extraction, full solubility development.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+              <div class="spectrum-desc">
+                Some shape but not vivid.
+                <div class="spectrum-cause">Possible causes: slight unevenness.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
+              <div class="spectrum-desc">
+                Flat, monotone, lacking development.
+                <div class="spectrum-cause">Possible causes: underextraction, coarse grind, low temperature.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="clarifications">
+            <div class="clarifications-title"><i class="fa-solid fa-lightbulb"></i> Clarifications</div>
+            <div class="clarification">Definition = structure.</div>
+            <div class="clarification">Clarity and definition are independent.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. ACIDITY -->
+    <div class="card" data-color="blue" onclick="toggleCard(this)">
+      <div class="card-header">
+        <span class="card-icon"><i class="fa-solid fa-lemon"></i></span>
+        <span class="card-title">Acidity</span>
+        <span class="card-toggle">+</span>
+      </div>
+      <div class="card-preview">
+        <div class="card-preview-text">The quality of the acidic sensation. Good acidity contributes energy and brightness; poor acidity feels sour or unbalanced.</div>
+        <div class="value-chips">
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-sun"></i></span> Bright</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-circle"></i></span> Flat</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-bolt"></i></span> Sharp</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="card-inner">
+          <div class="full-description">
+            Acidity describes the quality of the acidic sensation: sparkling, muted, or sharp. Good acidity contributes energy and brightness; poor acidity feels sour or unbalanced.
+          </div>
+
+          <div class="spectrum">
+            <div class="spectrum-title">Value Spectrum</div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-sun"></i> Bright</div>
+              <div class="spectrum-desc">
+                Lively, sparkling, clean.
+                <div class="spectrum-cause">Possible causes: proper extraction, balanced sweetness.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-circle"></i> Flat</div>
+              <div class="spectrum-desc">
+                Dull, muted, lacking energy.
+                <div class="spectrum-cause">Possible causes: coarse grind, low temperature, weak extraction.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-bolt"></i> Sharp</div>
+              <div class="spectrum-desc">
+                Sour, poking, unbalanced.
+                <div class="spectrum-cause">Possible causes: underextraction, insufficient sweetness.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="clarifications">
+            <div class="clarifications-title"><i class="fa-solid fa-lightbulb"></i> Clarifications</div>
+            <div class="clarification">Bright is not sour.</div>
+            <div class="clarification">Sharp acidity is unpleasant; bright acidity is desirable.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. SWEETNESS -->
+    <div class="card" data-color="orange" onclick="toggleCard(this)">
+      <div class="card-header">
+        <span class="card-icon"><i class="fa-solid fa-candy-cane"></i></span>
+        <span class="card-title">Sweetness</span>
+        <span class="card-toggle">+</span>
+      </div>
+      <div class="card-preview">
+        <div class="card-preview-text">Perceived sweetness from extraction, not literal sugar. It stabilizes acidity and fills the mid-palate.</div>
+        <div class="value-chips">
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-arrow-up"></i></span> High</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span> Medium</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-arrow-down"></i></span> Low</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="card-inner">
+          <div class="full-description">
+            Sweetness is perceived sweetness from extraction, not literal sugar. It stabilizes acidity and fills the mid-palate. Low sweetness creates thinness or hollowness.
+          </div>
+
+          <div class="spectrum">
+            <div class="spectrum-title">Value Spectrum</div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
+              <div class="spectrum-desc">
+                Rounded, integrated, rich sweetness.
+                <div class="spectrum-cause">Possible causes: strong extraction, consistent flow, adequate heat.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+              <div class="spectrum-desc">
+                Balanced but not rich.
+                <div class="spectrum-cause">Possible causes: moderate extraction.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
+              <div class="spectrum-desc">
+                Thin, sour, muted.
+                <div class="spectrum-cause">Possible causes: underextraction, coarse grind.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. BODY -->
+    <div class="card" data-color="purple" onclick="toggleCard(this)">
+      <div class="card-header">
+        <span class="card-icon"><i class="fa-solid fa-weight-hanging"></i></span>
+        <span class="card-title">Body</span>
+        <span class="card-toggle">+</span>
+      </div>
+      <div class="card-preview">
+        <div class="card-preview-text">Tactile weight and texture. Becomes meaningful when paired with finish and sweetness.</div>
+        <div class="value-chips">
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-feather"></i></span> Light</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span> Medium</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-dumbbell"></i></span> Heavy</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="card-inner">
+          <div class="full-description">
+            Body is tactile weight and texture. It does not diagnose extraction alone but becomes meaningful when paired with finish and sweetness.
+          </div>
+
+          <div class="spectrum">
+            <div class="spectrum-title">Value Spectrum</div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-feather"></i> Light</div>
+              <div class="spectrum-desc">
+                Watery, tea-like.
+                <div class="spectrum-cause">Possible causes: underextraction, low agitation, low dose.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+              <div class="spectrum-desc">
+                Balanced, typical for washed coffees.
+                <div class="spectrum-cause">Possible causes: stable extraction.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-dumbbell"></i> Heavy</div>
+              <div class="spectrum-desc">
+                Thick, syrupy.
+                <div class="spectrum-cause">Possible causes: finer grind, natural processing, higher TDS.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. STRUCTURE -->
+    <div class="card" data-color="green" onclick="toggleCard(this)">
+      <div class="card-header">
+        <span class="card-icon"><i class="fa-solid fa-cubes"></i></span>
+        <span class="card-title">Structure</span>
+        <span class="card-toggle">+</span>
+      </div>
+      <div class="card-preview">
+        <div class="card-preview-text">How acidity, sweetness, and finish integrate across the sip. Balanced structure forms a cohesive arc.</div>
+        <div class="value-chips">
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-check"></i></span> Balanced</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-circle-notch"></i></span> Hollow</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-bolt"></i></span> Sharp</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-grip-lines"></i></span> Flat</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-arrow-trend-down"></i></span> Collapsing</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="card-inner">
+          <div class="full-description">
+            Structure is how acidity, sweetness, and finish integrate across the sip. Balanced structure forms a cohesive arc; poor structure feels hollow, sharp, flat, or collapsing.
+          </div>
+
+          <div class="spectrum">
+            <div class="spectrum-title">Value Spectrum</div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-check"></i> Balanced</div>
+              <div class="spectrum-desc">
+                Complete arc with proper integration.
+                <div class="spectrum-cause">Possible causes: proper extraction, consistent grind, stable flow.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-circle-notch"></i> Hollow</div>
+              <div class="spectrum-desc">
+                Empty mid-palate; flavour at start and end only.
+                <div class="spectrum-cause">Possible causes: underextraction, uneven flow, coarse grind.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-bolt"></i> Sharp</div>
+              <div class="spectrum-desc">
+                Acidity dominates early too aggressively.
+                <div class="spectrum-cause">Possible causes: early-stage underextraction.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-grip-lines"></i> Flat</div>
+              <div class="spectrum-desc">
+                No development through the sip.
+                <div class="spectrum-cause">Possible causes: coarse grind, low temperature.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-arrow-trend-down"></i> Collapsing</div>
+              <div class="spectrum-desc">
+                Starts well but ends weak, dry, or bitter.
+                <div class="spectrum-cause">Possible causes: uneven extraction, fines overextracting.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="clarifications">
+            <div class="clarifications-title"><i class="fa-solid fa-lightbulb"></i> Clarifications</div>
+
+            <div class="comparison">
+              <div class="comparison-title">Sharp vs Flat</div>
+              <p><strong>Sharp</strong> = excessive early acidity.</p>
+              <p><strong>Flat</strong> = no development at all.</p>
+            </div>
+
+            <div class="comparison">
+              <div class="comparison-title">Hollow vs Collapsing</div>
+              <p><strong>Hollow</strong> = missing middle.</p>
+              <p><strong>Collapsing</strong> = finish fails after a good start.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. FINISH -->
+    <div class="card" data-color="red" onclick="toggleCard(this)">
+      <div class="card-header">
+        <span class="card-icon"><i class="fa-solid fa-flag-checkered"></i></span>
+        <span class="card-title">Finish</span>
+        <span class="card-toggle">+</span>
+      </div>
+      <div class="card-preview">
+        <div class="card-preview-text">What remains after swallowing: duration, flavour, and tactile sensations. Often the fastest indicator of extraction issues.</div>
+        <div class="value-chips">
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-forward-fast"></i></span> Quick</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-check"></i></span> Normal</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-heart"></i></span> Ling. Sweet</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-droplet-slash"></i></span> Ling. Dry</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-xmark"></i></span> Astringent</span>
+          <span class="chip"><span class="chip-icon"><i class="fa-solid fa-skull"></i></span> Bitter</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="card-inner">
+          <div class="full-description">
+            Finish describes what remains after swallowing: duration, flavour, and tactile sensations. Often the fastest indicator of extraction issues.
+          </div>
+
+          <div class="spectrum">
+            <div class="spectrum-title">Value Spectrum</div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-forward-fast"></i> Quick</div>
+              <div class="spectrum-desc">
+                Flavour disappears rapidly.
+                <div class="spectrum-cause">Possible causes: underextraction, coarse grind.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-check"></i> Normal</div>
+              <div class="spectrum-desc">
+                Pleasant, balanced fade.
+                <div class="spectrum-cause">Possible causes: proper extraction.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-heart"></i> Lingering Sweet</div>
+              <div class="spectrum-desc">
+                Sweetness remains.
+                <div class="spectrum-cause">Possible causes: excellent extraction.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-droplet-slash"></i> Lingering Dry</div>
+              <div class="spectrum-desc">
+                Light, temporary dryness.
+                <div class="spectrum-cause">Possible causes: fines overextracting.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-xmark"></i> Astringent</div>
+              <div class="spectrum-desc">
+                Strong, rough, tannic dryness.
+                <div class="spectrum-cause">Possible causes: major overextraction, channeling.</div>
+              </div>
+            </div>
+
+            <div class="spectrum-item">
+              <div class="spectrum-label"><i class="fa-solid fa-skull"></i> Bitter Finish</div>
+              <div class="spectrum-desc">
+                Lingering bitterness.
+                <div class="spectrum-cause">Possible causes: overextraction, too fine grind.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="clarifications">
+            <div class="clarifications-title"><i class="fa-solid fa-lightbulb"></i> Clarifications</div>
+
+            <div class="comparison">
+              <div class="comparison-title">Lingering Dry vs Astringent</div>
+              <p><strong>Lingering Dry</strong> = mild dryness, short-lived.</p>
+              <p><strong>Astringent</strong> = rough, gripping dryness, long-lasting.</p>
+            </div>
+
+            <div class="comparison">
+              <div class="comparison-title">Quick vs Dry Finish</div>
+              <p><strong>Quick</strong> = flavour ends suddenly.</p>
+              <p><strong>Dry</strong> = tactile dryness.</p>
+            </div>
+
+            <div class="comparison">
+              <div class="comparison-title">Bitterness vs Astringency vs Dry Finish</div>
+              <p><strong>Bitterness</strong> = flavour.</p>
+              <p><strong>Dry finish</strong> = mild dryness.</p>
+              <p><strong>Astringency</strong> = harsh dryness.</p>
+            </div>
+
+            <div class="comparison">
+              <div class="comparison-title">Thin vs Empty vs Bitter Finish</div>
+              <p><strong>Thin</strong> = weak remaining flavour.</p>
+              <p><strong>Empty</strong> = flavour disappears entirely.</p>
+              <p><strong>Bitter Finish</strong> = bitterness remains.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Q&A Section -->
+  <div class="qa-section">
+    <div class="qa-title">✦ Quick Q&A</div>
+
+    <div class="qa-item">
+      <div class="qa-question">What is sweetness?</div>
+      <div class="qa-answer">Perceived sweetness created by proper extraction. It stabilizes acidity and fills the mid-palate.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question">Why can too gentle pours cause uneven extraction?</div>
+      <div class="qa-answer">Water fails to penetrate the bed fully, causing channels and limiting saturation.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question">What is harshness vs bitterness?</div>
+      <div class="qa-answer"><strong>Bitterness</strong> is a flavour. <strong>Harshness</strong> is a tactile sensation: rough, aggressive, or sharp.</div>
+    </div>
+  </div>
+
+  <footer>
+    <span>☕</span> 10-Second Tasting Grid <span>✦</span> Barista Reference <span>◆</span>
+  </footer>
+
+  <script>
+    function toggleCard(card) {
+      card.classList.toggle('expanded');
+    }
+
+    // Allow keyboard navigation
+    document.querySelectorAll('.card').forEach(card => {
+      card.setAttribute('tabindex', '0');
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleCard(card);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
