@@ -159,14 +159,7 @@
       justify-content: center;
       font-weight: 700;
       font-size: 1.2rem;
-      transition: transform 0.3s ease, background 0.2s ease;
       flex-shrink: 0;
-    }
-
-    .card.expanded .card-toggle {
-      transform: rotate(45deg);
-      background: var(--black);
-      color: var(--white);
     }
 
     /* PREVIEW (closed state) */
@@ -178,10 +171,6 @@
       font-size: 0.85rem;
       line-height: 1.5;
       margin-bottom: 0.75rem;
-    }
-
-    .card.expanded .card-preview {
-      display: none;
     }
 
     /* VALUE CHIPS */
@@ -207,21 +196,137 @@
       font-size: 0.8rem;
     }
 
-    /* EXPANDED CONTENT */
+    /* HIDDEN CONTENT (for dialog) */
     .card-content {
-      max-height: 0;
+      display: none;
+    }
+
+    /* View Transition Names */
+    .card.transitioning {
+      view-transition-name: card-morph;
+    }
+
+    dialog.transitioning {
+      view-transition-name: card-morph;
+    }
+
+    /* DIALOG STYLES */
+    dialog {
+      border: var(--border-thick);
+      background: var(--white);
+      padding: 0;
+      max-width: 600px;
+      width: calc(100% - 2rem);
+      max-height: 85vh;
       overflow: hidden;
-      transition: max-height 0.4s ease-out;
+      box-shadow: 8px 8px 0 var(--black);
+      margin: auto;
+      inset: 0;
     }
 
-    .card.expanded .card-content {
-      max-height: 3000px;
-      transition: max-height 0.6s ease-in;
+    dialog::backdrop {
+      background: rgba(26, 26, 26, 0.7);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      transition: opacity 0.15s ease-out;
     }
 
-    .card-inner {
+    dialog[open]::backdrop {
+      opacity: 1;
+    }
+
+    dialog[open] {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dialog-header {
       padding: 1rem 1.25rem;
-      border-top: var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .dialog-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .dialog-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      flex-grow: 1;
+    }
+
+    .dialog-close {
+      width: 36px;
+      height: 36px;
+      border: var(--border);
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.5rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease;
+    }
+
+    .dialog-close:hover {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .dialog-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* View Transitions */
+    ::view-transition-old(card-morph),
+    ::view-transition-new(card-morph) {
+      animation-duration: 0.2s;
+      animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Fallback animations for browsers without View Transitions */
+    @keyframes dialog-morph-in {
+      from {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes dialog-morph-out {
+      from {
+        opacity: 1;
+        transform: scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+    }
+
+    dialog.opening {
+      animation: dialog-morph-in 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    dialog.closing {
+      animation: dialog-morph-out 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
     /* FULL DESCRIPTION */
@@ -246,10 +351,28 @@
       opacity: 0.7;
     }
 
+    .spectrum-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .spectrum-items.multi-column {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 500px) {
+      .spectrum-items.multi-column {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .spectrum-item {
-      border: var(--border);
-      margin-bottom: 0.75rem;
+      border: 2px solid var(--black);
       background: var(--white);
+      margin: 0;
     }
 
     .spectrum-label {
@@ -280,7 +403,7 @@
     .clarifications {
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: var(--border);
+      border-top: 2px dashed var(--black);
     }
 
     .clarifications-title {
@@ -308,12 +431,24 @@
       font-weight: 700;
     }
 
+    .comparisons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 500px) {
+      .comparisons {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .comparison {
       background: #f0f0e8;
-      border: var(--border);
+      border: 2px solid var(--black);
       padding: 0.75rem;
-      margin-top: 0.75rem;
       font-size: 0.8rem;
+      margin: 0;
     }
 
     .comparison-title {
@@ -479,7 +614,7 @@
   <div class="grid">
 
     <!-- 1. CLARITY -->
-    <div class="card" data-color="yellow" onclick="toggleCard(this)">
+    <div class="card" data-color="yellow">
       <div class="card-header">
         <span class="card-icon"><i class="fa-solid fa-gem"></i></span>
         <span class="card-title">Clarity</span>
@@ -501,28 +636,29 @@
 
           <div class="spectrum">
             <div class="spectrum-title">Value Spectrum</div>
-
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
-              <div class="spectrum-desc">
-                Clean, transparent, distinct flavours.
-                <div class="spectrum-cause">Possible causes: even extraction, good agitation, consistent grind.</div>
+            <div class="spectrum-items">
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
+                <div class="spectrum-desc">
+                  Clean, transparent, distinct flavours.
+                  <div class="spectrum-cause">Possible causes: even extraction, good agitation, consistent grind.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
-              <div class="spectrum-desc">
-                Partially blended, readable but not crisp.
-                <div class="spectrum-cause">Possible causes: mild unevenness, minor grind variability.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+                <div class="spectrum-desc">
+                  Partially blended, readable but not crisp.
+                  <div class="spectrum-cause">Possible causes: mild unevenness, minor grind variability.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
-              <div class="spectrum-desc">
-                Muddy, cloudy, merged flavours.
-                <div class="spectrum-cause">Possible causes: uneven extraction, channeling, disrupted flow.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
+                <div class="spectrum-desc">
+                  Muddy, cloudy, merged flavours.
+                  <div class="spectrum-cause">Possible causes: uneven extraction, channeling, disrupted flow.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -537,7 +673,7 @@
     </div>
 
     <!-- 2. DEFINITION -->
-    <div class="card" data-color="pink" onclick="toggleCard(this)">
+    <div class="card" data-color="pink">
       <div class="card-header">
         <span class="card-icon"><i class="fa-solid fa-wave-square"></i></span>
         <span class="card-title">Definition</span>
@@ -559,28 +695,29 @@
 
           <div class="spectrum">
             <div class="spectrum-title">Value Spectrum</div>
-
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
-              <div class="spectrum-desc">
-                Clear stages with distinct progression.
-                <div class="spectrum-cause">Possible causes: balanced extraction, full solubility development.</div>
+            <div class="spectrum-items">
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
+                <div class="spectrum-desc">
+                  Clear stages with distinct progression.
+                  <div class="spectrum-cause">Possible causes: balanced extraction, full solubility development.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
-              <div class="spectrum-desc">
-                Some shape but not vivid.
-                <div class="spectrum-cause">Possible causes: slight unevenness.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+                <div class="spectrum-desc">
+                  Some shape but not vivid.
+                  <div class="spectrum-cause">Possible causes: slight unevenness.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
-              <div class="spectrum-desc">
-                Flat, monotone, lacking development.
-                <div class="spectrum-cause">Possible causes: underextraction, coarse grind, low temperature.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
+                <div class="spectrum-desc">
+                  Flat, monotone, lacking development.
+                  <div class="spectrum-cause">Possible causes: underextraction, coarse grind, low temperature.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -595,7 +732,7 @@
     </div>
 
     <!-- 3. ACIDITY -->
-    <div class="card" data-color="blue" onclick="toggleCard(this)">
+    <div class="card" data-color="blue">
       <div class="card-header">
         <span class="card-icon"><i class="fa-solid fa-lemon"></i></span>
         <span class="card-title">Acidity</span>
@@ -617,28 +754,29 @@
 
           <div class="spectrum">
             <div class="spectrum-title">Value Spectrum</div>
-
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-sun"></i> Bright</div>
-              <div class="spectrum-desc">
-                Lively, sparkling, clean.
-                <div class="spectrum-cause">Possible causes: proper extraction, balanced sweetness.</div>
+            <div class="spectrum-items">
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-sun"></i> Bright</div>
+                <div class="spectrum-desc">
+                  Lively, sparkling, clean.
+                  <div class="spectrum-cause">Possible causes: proper extraction, balanced sweetness.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-circle"></i> Flat</div>
-              <div class="spectrum-desc">
-                Dull, muted, lacking energy.
-                <div class="spectrum-cause">Possible causes: coarse grind, low temperature, weak extraction.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-circle"></i> Flat</div>
+                <div class="spectrum-desc">
+                  Dull, muted, lacking energy.
+                  <div class="spectrum-cause">Possible causes: coarse grind, low temperature, weak extraction.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-bolt"></i> Sharp</div>
-              <div class="spectrum-desc">
-                Sour, poking, unbalanced.
-                <div class="spectrum-cause">Possible causes: underextraction, insufficient sweetness.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-bolt"></i> Sharp</div>
+                <div class="spectrum-desc">
+                  Sour, poking, unbalanced.
+                  <div class="spectrum-cause">Possible causes: underextraction, insufficient sweetness.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -653,7 +791,7 @@
     </div>
 
     <!-- 4. SWEETNESS -->
-    <div class="card" data-color="orange" onclick="toggleCard(this)">
+    <div class="card" data-color="orange">
       <div class="card-header">
         <span class="card-icon"><i class="fa-solid fa-candy-cane"></i></span>
         <span class="card-title">Sweetness</span>
@@ -675,28 +813,29 @@
 
           <div class="spectrum">
             <div class="spectrum-title">Value Spectrum</div>
-
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
-              <div class="spectrum-desc">
-                Rounded, integrated, rich sweetness.
-                <div class="spectrum-cause">Possible causes: strong extraction, consistent flow, adequate heat.</div>
+            <div class="spectrum-items">
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
+                <div class="spectrum-desc">
+                  Rounded, integrated, rich sweetness.
+                  <div class="spectrum-cause">Possible causes: strong extraction, consistent flow, adequate heat.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
-              <div class="spectrum-desc">
-                Balanced but not rich.
-                <div class="spectrum-cause">Possible causes: moderate extraction.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+                <div class="spectrum-desc">
+                  Balanced but not rich.
+                  <div class="spectrum-cause">Possible causes: moderate extraction.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
-              <div class="spectrum-desc">
-                Thin, sour, muted.
-                <div class="spectrum-cause">Possible causes: underextraction, coarse grind.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
+                <div class="spectrum-desc">
+                  Thin, sour, muted.
+                  <div class="spectrum-cause">Possible causes: underextraction, coarse grind.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -705,7 +844,7 @@
     </div>
 
     <!-- 5. BODY -->
-    <div class="card" data-color="purple" onclick="toggleCard(this)">
+    <div class="card" data-color="purple">
       <div class="card-header">
         <span class="card-icon"><i class="fa-solid fa-weight-hanging"></i></span>
         <span class="card-title">Body</span>
@@ -727,28 +866,29 @@
 
           <div class="spectrum">
             <div class="spectrum-title">Value Spectrum</div>
-
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-feather"></i> Light</div>
-              <div class="spectrum-desc">
-                Watery, tea-like.
-                <div class="spectrum-cause">Possible causes: underextraction, low agitation, low dose.</div>
+            <div class="spectrum-items">
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-feather"></i> Light</div>
+                <div class="spectrum-desc">
+                  Watery, tea-like.
+                  <div class="spectrum-cause">Possible causes: underextraction, low agitation, low dose.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
-              <div class="spectrum-desc">
-                Balanced, typical for washed coffees.
-                <div class="spectrum-cause">Possible causes: stable extraction.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+                <div class="spectrum-desc">
+                  Balanced, typical for washed coffees.
+                  <div class="spectrum-cause">Possible causes: stable extraction.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-dumbbell"></i> Heavy</div>
-              <div class="spectrum-desc">
-                Thick, syrupy.
-                <div class="spectrum-cause">Possible causes: finer grind, natural processing, higher TDS.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-dumbbell"></i> Heavy</div>
+                <div class="spectrum-desc">
+                  Thick, syrupy.
+                  <div class="spectrum-cause">Possible causes: finer grind, natural processing, higher TDS.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -757,7 +897,7 @@
     </div>
 
     <!-- 6. STRUCTURE -->
-    <div class="card" data-color="green" onclick="toggleCard(this)">
+    <div class="card" data-color="green">
       <div class="card-header">
         <span class="card-icon"><i class="fa-solid fa-cubes"></i></span>
         <span class="card-title">Structure</span>
@@ -781,61 +921,63 @@
 
           <div class="spectrum">
             <div class="spectrum-title">Value Spectrum</div>
-
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-check"></i> Balanced</div>
-              <div class="spectrum-desc">
-                Complete arc with proper integration.
-                <div class="spectrum-cause">Possible causes: proper extraction, consistent grind, stable flow.</div>
+            <div class="spectrum-items multi-column">
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-check"></i> Balanced</div>
+                <div class="spectrum-desc">
+                  Complete arc with proper integration.
+                  <div class="spectrum-cause">Possible causes: proper extraction, consistent grind, stable flow.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-circle-notch"></i> Hollow</div>
-              <div class="spectrum-desc">
-                Empty mid-palate; flavour at start and end only.
-                <div class="spectrum-cause">Possible causes: underextraction, uneven flow, coarse grind.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-circle-notch"></i> Hollow</div>
+                <div class="spectrum-desc">
+                  Empty mid-palate; flavour at start and end only.
+                  <div class="spectrum-cause">Possible causes: underextraction, uneven flow, coarse grind.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-bolt"></i> Sharp</div>
-              <div class="spectrum-desc">
-                Acidity dominates early too aggressively.
-                <div class="spectrum-cause">Possible causes: early-stage underextraction.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-bolt"></i> Sharp</div>
+                <div class="spectrum-desc">
+                  Acidity dominates early too aggressively.
+                  <div class="spectrum-cause">Possible causes: early-stage underextraction.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-grip-lines"></i> Flat</div>
-              <div class="spectrum-desc">
-                No development through the sip.
-                <div class="spectrum-cause">Possible causes: coarse grind, low temperature.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-grip-lines"></i> Flat</div>
+                <div class="spectrum-desc">
+                  No development through the sip.
+                  <div class="spectrum-cause">Possible causes: coarse grind, low temperature.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-arrow-trend-down"></i> Collapsing</div>
-              <div class="spectrum-desc">
-                Starts well but ends weak, dry, or bitter.
-                <div class="spectrum-cause">Possible causes: uneven extraction, fines overextracting.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-arrow-trend-down"></i> Collapsing</div>
+                <div class="spectrum-desc">
+                  Starts well but ends weak, dry, or bitter.
+                  <div class="spectrum-cause">Possible causes: uneven extraction, fines overextracting.</div>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="clarifications">
             <div class="clarifications-title"><i class="fa-solid fa-lightbulb"></i> Clarifications</div>
+            <div class="comparisons">
+              <div class="comparison">
+                <div class="comparison-title">Sharp vs Flat</div>
+                <p><strong>Sharp</strong> = excessive early acidity.</p>
+                <p><strong>Flat</strong> = no development at all.</p>
+              </div>
 
-            <div class="comparison">
-              <div class="comparison-title">Sharp vs Flat</div>
-              <p><strong>Sharp</strong> = excessive early acidity.</p>
-              <p><strong>Flat</strong> = no development at all.</p>
-            </div>
-
-            <div class="comparison">
-              <div class="comparison-title">Hollow vs Collapsing</div>
-              <p><strong>Hollow</strong> = missing middle.</p>
-              <p><strong>Collapsing</strong> = finish fails after a good start.</p>
+              <div class="comparison">
+                <div class="comparison-title">Hollow vs Collapsing</div>
+                <p><strong>Hollow</strong> = missing middle.</p>
+                <p><strong>Collapsing</strong> = finish fails after a good start.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -843,7 +985,7 @@
     </div>
 
     <!-- 7. FINISH -->
-    <div class="card" data-color="red" onclick="toggleCard(this)">
+    <div class="card" data-color="red">
       <div class="card-header">
         <span class="card-icon"><i class="fa-solid fa-flag-checkered"></i></span>
         <span class="card-title">Finish</span>
@@ -868,83 +1010,85 @@
 
           <div class="spectrum">
             <div class="spectrum-title">Value Spectrum</div>
-
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-forward-fast"></i> Quick</div>
-              <div class="spectrum-desc">
-                Flavour disappears rapidly.
-                <div class="spectrum-cause">Possible causes: underextraction, coarse grind.</div>
+            <div class="spectrum-items multi-column">
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-forward-fast"></i> Quick</div>
+                <div class="spectrum-desc">
+                  Flavour disappears rapidly.
+                  <div class="spectrum-cause">Possible causes: underextraction, coarse grind.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-check"></i> Normal</div>
-              <div class="spectrum-desc">
-                Pleasant, balanced fade.
-                <div class="spectrum-cause">Possible causes: proper extraction.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-check"></i> Normal</div>
+                <div class="spectrum-desc">
+                  Pleasant, balanced fade.
+                  <div class="spectrum-cause">Possible causes: proper extraction.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-heart"></i> Lingering Sweet</div>
-              <div class="spectrum-desc">
-                Sweetness remains.
-                <div class="spectrum-cause">Possible causes: excellent extraction.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-heart"></i> Lingering Sweet</div>
+                <div class="spectrum-desc">
+                  Sweetness remains.
+                  <div class="spectrum-cause">Possible causes: excellent extraction.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-droplet-slash"></i> Lingering Dry</div>
-              <div class="spectrum-desc">
-                Light, temporary dryness.
-                <div class="spectrum-cause">Possible causes: fines overextracting.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-droplet-slash"></i> Lingering Dry</div>
+                <div class="spectrum-desc">
+                  Light, temporary dryness.
+                  <div class="spectrum-cause">Possible causes: fines overextracting.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-xmark"></i> Astringent</div>
-              <div class="spectrum-desc">
-                Strong, rough, tannic dryness.
-                <div class="spectrum-cause">Possible causes: major overextraction, channeling.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-xmark"></i> Astringent</div>
+                <div class="spectrum-desc">
+                  Strong, rough, tannic dryness.
+                  <div class="spectrum-cause">Possible causes: major overextraction, channeling.</div>
+                </div>
               </div>
-            </div>
 
-            <div class="spectrum-item">
-              <div class="spectrum-label"><i class="fa-solid fa-skull"></i> Bitter Finish</div>
-              <div class="spectrum-desc">
-                Lingering bitterness.
-                <div class="spectrum-cause">Possible causes: overextraction, too fine grind.</div>
+              <div class="spectrum-item">
+                <div class="spectrum-label"><i class="fa-solid fa-skull"></i> Bitter Finish</div>
+                <div class="spectrum-desc">
+                  Lingering bitterness.
+                  <div class="spectrum-cause">Possible causes: overextraction, too fine grind.</div>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="clarifications">
             <div class="clarifications-title"><i class="fa-solid fa-lightbulb"></i> Clarifications</div>
+            <div class="comparisons">
+              <div class="comparison">
+                <div class="comparison-title">Lingering Dry vs Astringent</div>
+                <p><strong>Lingering Dry</strong> = mild dryness, short-lived.</p>
+                <p><strong>Astringent</strong> = rough, gripping dryness, long-lasting.</p>
+              </div>
 
-            <div class="comparison">
-              <div class="comparison-title">Lingering Dry vs Astringent</div>
-              <p><strong>Lingering Dry</strong> = mild dryness, short-lived.</p>
-              <p><strong>Astringent</strong> = rough, gripping dryness, long-lasting.</p>
-            </div>
+              <div class="comparison">
+                <div class="comparison-title">Quick vs Dry Finish</div>
+                <p><strong>Quick</strong> = flavour ends suddenly.</p>
+                <p><strong>Dry</strong> = tactile dryness.</p>
+              </div>
 
-            <div class="comparison">
-              <div class="comparison-title">Quick vs Dry Finish</div>
-              <p><strong>Quick</strong> = flavour ends suddenly.</p>
-              <p><strong>Dry</strong> = tactile dryness.</p>
-            </div>
+              <div class="comparison">
+                <div class="comparison-title">Bitterness vs Astringency vs Dry Finish</div>
+                <p><strong>Bitterness</strong> = flavour.</p>
+                <p><strong>Dry finish</strong> = mild dryness.</p>
+                <p><strong>Astringency</strong> = harsh dryness.</p>
+              </div>
 
-            <div class="comparison">
-              <div class="comparison-title">Bitterness vs Astringency vs Dry Finish</div>
-              <p><strong>Bitterness</strong> = flavour.</p>
-              <p><strong>Dry finish</strong> = mild dryness.</p>
-              <p><strong>Astringency</strong> = harsh dryness.</p>
-            </div>
-
-            <div class="comparison">
-              <div class="comparison-title">Thin vs Empty vs Bitter Finish</div>
-              <p><strong>Thin</strong> = weak remaining flavour.</p>
-              <p><strong>Empty</strong> = flavour disappears entirely.</p>
-              <p><strong>Bitter Finish</strong> = bitterness remains.</p>
+              <div class="comparison">
+                <div class="comparison-title">Thin vs Empty vs Bitter Finish</div>
+                <p><strong>Thin</strong> = weak remaining flavour.</p>
+                <p><strong>Empty</strong> = flavour disappears entirely.</p>
+                <p><strong>Bitter Finish</strong> = bitterness remains.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -977,18 +1121,131 @@
     <span>☕</span> 10-Second Tasting Grid <span>✦</span> Barista Reference <span>◆</span>
   </footer>
 
+  <!-- The Dialog -->
+  <dialog id="card-dialog">
+    <div class="dialog-header">
+      <span class="dialog-icon"></span>
+      <span class="dialog-title"></span>
+      <button class="dialog-close" onclick="closeDialog()">&times;</button>
+    </div>
+    <div class="dialog-body"></div>
+  </dialog>
+
   <script>
-    function toggleCard(card) {
-      card.classList.toggle('expanded');
+    const dialog = document.getElementById('card-dialog');
+    const dialogIcon = dialog.querySelector('.dialog-icon');
+    const dialogTitle = dialog.querySelector('.dialog-title');
+    const dialogHeader = dialog.querySelector('.dialog-header');
+    const dialogBody = dialog.querySelector('.dialog-body');
+    let activeCard = null;
+
+    const colorMap = {
+      yellow: 'var(--yellow)',
+      pink: 'var(--pink)',
+      blue: 'var(--blue)',
+      orange: 'var(--orange)',
+      purple: 'var(--purple)',
+      green: 'var(--green)',
+      red: 'var(--red)'
+    };
+
+    function openDialog(card) {
+      activeCard = card;
+
+      // Get data from the card
+      const color = card.dataset.color;
+      const icon = card.querySelector('.card-icon').innerHTML;
+      const title = card.querySelector('.card-title').textContent;
+      const content = card.querySelector('.card-content .card-inner').innerHTML;
+
+      // Set header color
+      dialogHeader.style.background = colorMap[color] || 'var(--white)';
+      dialogHeader.style.color = (color === 'purple' || color === 'red') ? 'white' : 'var(--black)';
+
+      // Use View Transitions API if available
+      if (document.startViewTransition) {
+        // Add transition name to source card
+        card.classList.add('transitioning');
+
+        const transition = document.startViewTransition(() => {
+          // Remove transition name from card, add to dialog
+          card.classList.remove('transitioning');
+          dialog.classList.add('transitioning');
+
+          // Populate dialog
+          dialogIcon.innerHTML = icon;
+          dialogTitle.textContent = title;
+          dialogBody.innerHTML = content;
+
+          dialog.showModal();
+        });
+
+        transition.finished.then(() => {
+          dialog.classList.remove('transitioning');
+        });
+      } else {
+        // Fallback for browsers without View Transitions
+        dialogIcon.innerHTML = icon;
+        dialogTitle.textContent = title;
+        dialogBody.innerHTML = content;
+
+        dialog.classList.add('opening');
+        dialog.showModal();
+
+        dialog.addEventListener('animationend', () => {
+          dialog.classList.remove('opening');
+        }, { once: true });
+      }
     }
 
-    // Allow keyboard navigation
+    function closeDialog() {
+      if (document.startViewTransition && activeCard) {
+        dialog.classList.add('transitioning');
+
+        const transition = document.startViewTransition(() => {
+          dialog.classList.remove('transitioning');
+          activeCard.classList.add('transitioning');
+          dialog.close();
+        });
+
+        transition.finished.then(() => {
+          activeCard.classList.remove('transitioning');
+          activeCard = null;
+        });
+      } else {
+        // Fallback
+        dialog.classList.add('closing');
+        dialog.addEventListener('animationend', () => {
+          dialog.classList.remove('closing');
+          dialog.close();
+          activeCard = null;
+        }, { once: true });
+      }
+    }
+
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        closeDialog();
+      }
+    });
+
+    // Close on Escape key (prevent default to use our animation)
+    dialog.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      closeDialog();
+    });
+
+    // Card click handlers
     document.querySelectorAll('.card').forEach(card => {
       card.setAttribute('tabindex', '0');
+
+      card.addEventListener('click', () => openDialog(card));
+
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          toggleCard(card);
+          openDialog(card);
         }
       });
     });
