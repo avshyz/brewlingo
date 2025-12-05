@@ -35,8 +35,6 @@
       background-image: radial-gradient(circle, var(--black) 1px, transparent 1px);
       background-size: 20px 20px;
       min-height: 100vh;
-      padding: 1rem;
-      padding-top: 3.5rem;
 
       &.dialog-open {
         overflow: hidden;
@@ -88,14 +86,18 @@
 
     /* HEADER */
     header {
-      background: aquamarine;
-      border: var(--border-thick);
-      padding: 1.5rem 2rem;
+      background: #FF4D1F;
+      background-clip: padding-box;
+      padding: 4.5rem 2rem;
+      padding-bottom: 2.5rem;
       margin-bottom: 2rem;
       position: relative;
-      box-shadow: 8px 8px 0 var(--black);
+      border-bottom: 16px solid transparent;
+      border-image: url('assets/header-frill.svg') 16 round;
 
       h1 {
+        max-width: 1200px;
+        margin: 0 auto;
         font-family: 'Archivo Black', sans-serif;
         font-size: clamp(1.8rem, 5vw, 3.5rem);
         font-weight: 400;
@@ -650,7 +652,6 @@
     </div>
   </div>
 
-  <div class="container">
   <header>
     <h1>
       Brewlingo
@@ -658,6 +659,7 @@
     </h1>
   </header>
 
+  <div class="container">
   <div class="tap-hint">tap cards to expand</div>
 
   <div class="grid">
