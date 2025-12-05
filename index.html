@@ -106,16 +106,10 @@
       border-image: url('assets/header-frill.svg') 16 round;
       border-image-repeat: repeat;
 
-      .header-inner {
+      h1 {
         max-width: var(--view-width);
         margin: 0 auto;
         padding: 0 var(--view-padding);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      h1 {
         font-family: 'Archivo Black', sans-serif;
         font-size: clamp(1.8rem, 5vw, 3.5rem);
         font-weight: 400;
@@ -145,11 +139,6 @@
           margin-top: 0.5rem;
           font-family: 'Space Mono', monospace;
         }
-      }
-
-      .header-logo {
-        width: clamp(60px, 10vw, 100px);
-        height: auto;
       }
     }
 
@@ -183,6 +172,15 @@
       box-shadow: 6px 6px 0 var(--black);
       overflow: hidden;
       cursor: pointer;
+
+      &:focus {
+        outline: none;
+      }
+
+      &:focus-visible {
+        outline: 3px solid magenta;
+        outline-offset: 4px;
+      }
 
       .card-title,
       .card-icon,
@@ -736,13 +734,10 @@
   </div>
 
   <header>
-    <div class="header-inner">
-      <h1>
-        Brewlingo
-        <span>Barista Reference</span>
-      </h1>
-      <img src="assets/bean.svg" alt="Coffee bean" class="header-logo">
-    </div>
+    <h1>
+      Brewlingo
+      <span>Barista Reference</span>
+    </h1>
   </header>
 
   <div class="container">
