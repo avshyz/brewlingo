@@ -39,6 +39,10 @@
       padding: 1rem;
     }
 
+    body.dialog-open {
+      overflow: hidden;
+    }
+
     /* HEADER */
     header {
       background: var(--yellow);
@@ -224,6 +228,17 @@
       inset: 0;
     }
 
+    @media (max-width: 500px) {
+      dialog {
+        max-width: 100%;
+        width: 100%;
+        max-height: 100%;
+        height: 100%;
+        border: none;
+        box-shadow: none;
+      }
+    }
+
     dialog::backdrop {
       background: rgba(26, 26, 26, 0.7);
       backdrop-filter: blur(4px);
@@ -333,8 +348,8 @@
     .full-description {
       font-size: 0.85rem;
       line-height: 1.6;
-      margin-bottom: 1.25rem;
-      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
       border-bottom: 2px dashed var(--black);
     }
 
@@ -401,8 +416,8 @@
 
     /* CLARIFICATIONS */
     .clarifications {
-      margin-top: 1rem;
-      padding-top: 1rem;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
       border-top: 2px dashed var(--black);
     }
 
@@ -472,9 +487,13 @@
     .card[data-color="green"] .card-header { background: var(--green); }
     .card[data-color="red"] .card-header { background: var(--red); color: white; }
 
+    .card-toggle {
+      color: var(--black);
+    }
+
     /* Q&A SECTION */
     .qa-section {
-      margin-top: 2rem;
+      margin-top: 4rem;
       margin-left: auto;
       margin-right: auto;
       background: var(--black);
@@ -547,7 +566,7 @@
 
     /* DECORATIVE ELEMENTS */
     .deco {
-      position: fixed;
+      position: absolute;
       pointer-events: none;
       font-size: 2rem;
       opacity: 0.15;
@@ -1177,6 +1196,7 @@
           dialogTitle.textContent = title;
           dialogBody.innerHTML = content;
 
+          document.body.classList.add('dialog-open');
           dialog.showModal();
         });
 
@@ -1190,6 +1210,7 @@
         dialogBody.innerHTML = content;
 
         dialog.classList.add('opening');
+        document.body.classList.add('dialog-open');
         dialog.showModal();
 
         dialog.addEventListener('animationend', () => {
@@ -1206,6 +1227,7 @@
           dialog.classList.remove('transitioning');
           activeCard.classList.add('transitioning');
           dialog.close();
+          document.body.classList.remove('dialog-open');
         });
 
         transition.finished.then(() => {
@@ -1218,6 +1240,7 @@
         dialog.addEventListener('animationend', () => {
           dialog.classList.remove('closing');
           dialog.close();
+          document.body.classList.remove('dialog-open');
           activeCard = null;
         }, { once: true });
       }
