@@ -53,15 +53,6 @@
       box-shadow: 8px 8px 0 var(--black);
     }
 
-    header::before {
-      content: '☕';
-      position: absolute;
-      top: -20px;
-      right: 20px;
-      font-size: 3rem;
-      transform: rotate(15deg);
-    }
-
     header::after {
       content: '✦';
       position: absolute;
@@ -146,7 +137,7 @@
 
     .card-title {
       font-family: 'Inter', sans-serif;
-      font-size: 1.1rem;
+      font-size: 1.3rem;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: -0.5px;
@@ -223,7 +214,7 @@
       width: calc(100% - 2rem);
       max-height: 85vh;
       overflow: hidden;
-      box-shadow: 8px 8px 0 var(--black);
+      box-shadow: none;
       margin: auto;
       inset: 0;
     }
@@ -483,37 +474,43 @@
     .card[data-color="pink"] .card-header { background: var(--pink); }
     .card[data-color="blue"] .card-header { background: var(--blue); }
     .card[data-color="orange"] .card-header { background: var(--orange); }
-    .card[data-color="purple"] .card-header { background: var(--purple); color: white; }
+    .card[data-color="purple"] .card-header { background: var(--purple); }
     .card[data-color="green"] .card-header { background: var(--green); }
-    .card[data-color="red"] .card-header { background: var(--red); color: white; }
+    .card[data-color="red"] .card-header { background: var(--red); }
 
     .card-toggle {
       color: var(--black);
     }
 
     /* Q&A SECTION */
-    .qa-section {
-      margin-top: 4rem;
+    .qa-wrapper {
+      margin-top: 6rem;
       margin-left: auto;
       margin-right: auto;
-      background: var(--black);
-      color: var(--white);
-      border: var(--border-thick);
-      padding: 1.5rem;
-      box-shadow: 8px 8px 0 var(--yellow);
-      position: relative;
       max-width: 700px;
+      position: relative;
     }
 
-    .qa-section::before {
-      content: '?';
+    .qa-wrapper .pop-looky {
       position: absolute;
-      top: -15px;
-      right: 30px;
-      font-size: 2.5rem;
-      font-weight: 900;
-      color: var(--yellow);
-      font-family: 'Inter', sans-serif;
+      left: 78px;
+      top: -40px;
+      height: 50px;
+      width: auto;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .qa-section {
+      background: var(--white);
+      color: var(--black);
+      border: 2px solid var(--black);
+      padding: 1.5rem;
+      padding-top: 2rem;
+      box-shadow: 5px 5px 0px rgba(0, 0, 0, .25);
+      position: relative;
+      border-radius: 0.75rem;
+      overflow: hidden;
     }
 
     .qa-title {
@@ -530,7 +527,7 @@
     .qa-item {
       margin-bottom: 1.25rem;
       padding-bottom: 1.25rem;
-      border-bottom: 2px dashed rgba(255,255,255,0.3);
+      border-bottom: 2px dashed rgba(0,0,0,0.2);
     }
 
     .qa-item:last-child {
@@ -550,8 +547,8 @@
 
     .qa-question::before {
       content: 'Q';
-      background: var(--yellow);
-      color: var(--black);
+      background: var(--black);
+      color: var(--white);
       padding: 0.1rem 0.4rem;
       font-size: 0.7rem;
       font-weight: 900;
@@ -561,7 +558,7 @@
       font-size: 0.85rem;
       line-height: 1.6;
       padding-left: 1.75rem;
-      opacity: 0.9;
+      opacity: 0.8;
     }
 
     /* DECORATIVE ELEMENTS */
@@ -573,10 +570,16 @@
       z-index: -1;
     }
 
-    .deco-1 { top: 20%; left: 5%; transform: rotate(-15deg); }
-    .deco-2 { top: 40%; right: 3%; transform: rotate(20deg); }
-    .deco-3 { bottom: 30%; left: 8%; transform: rotate(10deg); }
-    .deco-4 { bottom: 15%; right: 10%; transform: rotate(-25deg); }
+    .deco-1 { top: 5%; left: 5%; transform: rotate(-15deg); }
+    .deco-2 { top: 12%; right: 3%; transform: rotate(20deg); }
+    .deco-3 { top: 25%; left: 8%; transform: rotate(10deg); }
+    .deco-4 { top: 35%; right: 10%; transform: rotate(-25deg); }
+    .deco-5 { top: 45%; left: 3%; transform: rotate(5deg); }
+    .deco-6 { top: 55%; right: 6%; transform: rotate(-10deg); }
+    .deco-7 { top: 65%; left: 10%; transform: rotate(15deg); }
+    .deco-8 { top: 75%; right: 4%; transform: rotate(-20deg); }
+    .deco-9 { top: 85%; left: 6%; transform: rotate(25deg); }
+    .deco-10 { top: 92%; right: 8%; transform: rotate(-5deg); }
 
     /* FOOTER */
     footer {
@@ -620,6 +623,12 @@
   <div class="deco deco-2">✦</div>
   <div class="deco deco-3">◆</div>
   <div class="deco deco-4">○</div>
+  <div class="deco deco-5">✦</div>
+  <div class="deco deco-6">☕</div>
+  <div class="deco deco-7">○</div>
+  <div class="deco deco-8">◆</div>
+  <div class="deco deco-9">✦</div>
+  <div class="deco deco-10">☕</div>
 
   <header>
     <h1>
@@ -1117,8 +1126,10 @@
   </div>
 
   <!-- Q&A Section -->
-  <div class="qa-section">
-    <div class="qa-title">✦ Quick Q&A</div>
+  <div class="qa-wrapper">
+    <img src="assets/pop-looky.png" alt="" class="pop-looky">
+    <div class="qa-section">
+      <div class="qa-title">✦ Quick Q&A</div>
 
     <div class="qa-item">
       <div class="qa-question">What is sweetness?</div>
@@ -1133,6 +1144,7 @@
     <div class="qa-item">
       <div class="qa-question">What is harshness vs bitterness?</div>
       <div class="qa-answer"><strong>Bitterness</strong> is a flavour. <strong>Harshness</strong> is a tactile sensation: rough, aggressive, or sharp.</div>
+    </div>
     </div>
   </div>
 
@@ -1179,7 +1191,7 @@
 
       // Set header color
       dialogHeader.style.background = colorMap[color] || 'var(--white)';
-      dialogHeader.style.color = (color === 'purple' || color === 'red') ? 'white' : 'var(--black)';
+      dialogHeader.style.color = 'var(--black)';
 
       // Use View Transitions API if available
       if (document.startViewTransition) {
