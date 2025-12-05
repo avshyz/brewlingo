@@ -6,7 +6,7 @@
   <title>Brewlingo | Barista Reference</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@900&family=Archivo+Black&family=Ubuntu:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     * {
@@ -164,9 +164,25 @@
       overflow: hidden;
       cursor: pointer;
 
+      .card-title,
+      .card-icon,
+      .card-toggle {
+        text-shadow:
+          0 0 0 cyan,
+          0 0 0 magenta;
+        transition: text-shadow 0.2s ease;
+      }
+
       &:hover {
         transform: translate(-2px, -2px);
         box-shadow: 8px 8px 0 var(--black);
+
+        .card-title,
+        .card-icon,
+        .card-toggle {
+          text-shadow:
+            -2px -2px 0 cyan, 2px 2px 0 magenta;
+        }
       }
 
       &.transitioning {
@@ -267,6 +283,16 @@
 
     .chip-icon {
       font-size: 0.8rem;
+      text-shadow:
+        0 0 0 cyan,
+        0 0 0 magenta;
+      transition: text-shadow 0.2s ease;
+    }
+
+    .card:hover .chip-icon {
+      text-shadow:
+        -1px -1px 0 cyan,
+        1px 1px 0 magenta;
     }
 
     /* Chip to Spectrum view transitions */
@@ -363,7 +389,7 @@
     }
 
     .dialog-title {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Archivo Black', sans-serif;
       font-size: 1.3rem;
       font-weight: 900;
       text-transform: uppercase;
@@ -606,8 +632,8 @@
 
       &::before {
         content: 'Q';
-        background: var(--black);
-        color: var(--white);
+        background: var(--pink);
+        color: var(--black);
         padding: 0.1rem 0.4rem;
         font-size: 0.7rem;
         font-weight: 900;
@@ -619,6 +645,19 @@
       line-height: 1.6;
       padding-left: 1.75rem;
       opacity: 0.8;
+      position: relative;
+
+      &::before {
+        content: 'A';
+        background: var(--blue);
+        color: var(--black);
+        padding: 0.1rem 0.4rem;
+        font-size: 0.7rem;
+        font-weight: 900;
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
     }
 
     /* FOOTER */
