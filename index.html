@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>10-Second Tasting Grid | Barista Reference</title>
+  <title>Brewlingo | Barista Reference</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@900&family=Archivo+Black&family=Ubuntu:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     * {
@@ -37,10 +37,59 @@
       background-size: 20px 20px;
       min-height: 100vh;
       padding: 1rem;
+      padding-top: 3.5rem;
     }
 
     body.dialog-open {
       overflow: hidden;
+    }
+
+    /* MARQUEE BANNER */
+    .marquee-banner {
+      background: var(--black);
+      color: var(--white);
+      padding: 0.55rem 0;
+      overflow: hidden;
+      white-space: nowrap;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999999999;
+    }
+
+    .marquee-content {
+      display: inline-block;
+      animation: marquee 20s linear infinite;
+    }
+
+    .marquee-content span {
+      font-family: 'Ubuntu', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .marquee-content span::after {
+      content: ' • ';
+      margin: 0 1rem;
+    }
+
+    @keyframes marquee {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    /* CONTAINER */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
     }
 
     /* HEADER */
@@ -53,18 +102,10 @@
       box-shadow: 8px 8px 0 var(--black);
     }
 
-    header::after {
-      content: '✦';
-      position: absolute;
-      bottom: -10px;
-      left: 30px;
-      font-size: 2rem;
-    }
-
     h1 {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Archivo Black', sans-serif;
       font-size: clamp(1.8rem, 5vw, 3.5rem);
-      font-weight: 900;
+      font-weight: 400;
       text-transform: uppercase;
       letter-spacing: -2px;
       line-height: 1;
@@ -93,12 +134,6 @@
     @media (min-width: 1024px) {
       .grid {
         columns: 3;
-      }
-    }
-
-    @media (min-width: 1400px) {
-      .grid {
-        columns: 4;
       }
     }
 
@@ -136,9 +171,9 @@
     }
 
     .card-title {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Archivo Black', sans-serif;
       font-size: 1.3rem;
-      font-weight: 900;
+      font-weight: 400;
       text-transform: uppercase;
       letter-spacing: -0.5px;
       flex-grow: 1;
@@ -514,9 +549,9 @@
     }
 
     .qa-title {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Archivo Black', sans-serif;
       font-size: 1.5rem;
-      font-weight: 900;
+      font-weight: 400;
       text-transform: uppercase;
       margin-bottom: 1.5rem;
       display: flex;
@@ -630,10 +665,30 @@
   <div class="deco deco-9">✦</div>
   <div class="deco deco-10">☕</div>
 
+  <div class="marquee-banner">
+    <div class="marquee-content">
+      <span>Speak coffee fluently</span>
+      <span>Your coffee vocabulary guide</span>
+      <span>From bean to word</span>
+      <span>Decode every sip</span>
+      <span>The barista's glossary</span>
+      <span>Know what you're tasting</span>
+      <span>Coffee fluency starts here</span>
+      <span>Speak coffee fluently</span>
+      <span>Your coffee vocabulary guide</span>
+      <span>From bean to word</span>
+      <span>Decode every sip</span>
+      <span>The barista's glossary</span>
+      <span>Know what you're tasting</span>
+      <span>Coffee fluency starts here</span>
+    </div>
+  </div>
+
+  <div class="container">
   <header>
     <h1>
-      The 10-Second Tasting Grid
-      <span>Unified Barista Reference</span>
+      Brewlingo
+      <span>Barista Reference</span>
     </h1>
   </header>
 
@@ -1149,8 +1204,9 @@
   </div>
 
   <footer>
-    <span>☕</span> 10-Second Tasting Grid <span>✦</span> Barista Reference <span>◆</span>
+    <span>☕</span> Brewlingo <span>✦</span> Barista Reference <span>◆</span>
   </footer>
+  </div>
 
   <!-- The Dialog -->
   <dialog id="card-dialog">
