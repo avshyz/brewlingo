@@ -88,7 +88,7 @@
 
     /* HEADER */
     header {
-      background: var(--yellow);
+      background: aquamarine;
       border: var(--border-thick);
       padding: 1.5rem 2rem;
       margin-bottom: 2rem;
@@ -402,6 +402,7 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      background: var(--dialog-color);
     }
 
     .spectrum-desc {
@@ -559,26 +560,6 @@
       opacity: 0.8;
     }
 
-    /* DECORATIVE ELEMENTS */
-    .deco {
-      position: absolute;
-      pointer-events: none;
-      font-size: 2rem;
-      opacity: 0.15;
-      z-index: -1;
-
-      &-1 { top: 5%; left: 5%; transform: rotate(-15deg); }
-      &-2 { top: 12%; right: 3%; transform: rotate(20deg); }
-      &-3 { top: 25%; left: 8%; transform: rotate(10deg); }
-      &-4 { top: 35%; right: 10%; transform: rotate(-25deg); }
-      &-5 { top: 45%; left: 3%; transform: rotate(5deg); }
-      &-6 { top: 55%; right: 6%; transform: rotate(-10deg); }
-      &-7 { top: 65%; left: 10%; transform: rotate(15deg); }
-      &-8 { top: 75%; right: 4%; transform: rotate(-20deg); }
-      &-9 { top: 85%; left: 6%; transform: rotate(25deg); }
-      &-10 { top: 92%; right: 8%; transform: rotate(-5deg); }
-    }
-
     /* FOOTER */
     footer {
       margin-top: 2rem;
@@ -615,18 +596,6 @@
   </style>
 </head>
 <body>
-  <!-- Decorative elements -->
-  <div class="deco deco-1">☕</div>
-  <div class="deco deco-2">✦</div>
-  <div class="deco deco-3">◆</div>
-  <div class="deco deco-4">○</div>
-  <div class="deco deco-5">✦</div>
-  <div class="deco deco-6">☕</div>
-  <div class="deco deco-7">○</div>
-  <div class="deco deco-8">◆</div>
-  <div class="deco deco-9">✦</div>
-  <div class="deco deco-10">☕</div>
-
   <div class="marquee-banner">
     <div class="marquee-content">
       <span>Speak coffee fluently</span>
@@ -1208,8 +1177,10 @@
       const content = card.querySelector('.card-content .card-inner').innerHTML;
 
       // Set header color
-      dialogHeader.style.background = colorMap[color] || 'var(--white)';
+      const dialogColor = colorMap[color] || 'var(--white)';
+      dialogHeader.style.background = dialogColor;
       dialogHeader.style.color = 'var(--black)';
+      dialog.style.setProperty('--dialog-color', dialogColor);
 
       // Use View Transitions API if available
       if (document.startViewTransition) {
