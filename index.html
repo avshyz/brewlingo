@@ -27,6 +27,8 @@
       --red: #ef4444;
       --border: 3px solid var(--black);
       --border-thick: 5px solid var(--black);
+      --view-width: 1200px;
+      --view-padding: 1rem;
     }
 
     body {
@@ -79,9 +81,9 @@
 
     /* CONTAINER */
     .container {
-      max-width: 1200px;
+      max-width: var(--view-width);
       margin: 0 auto;
-      padding: 0 1rem;
+      padding: 0 var(--view-padding);
     }
 
     /* HEADER */
@@ -96,14 +98,30 @@
       border-image: url('assets/header-frill.svg') 16 round;
 
       h1 {
-        max-width: 1200px;
+        max-width: var(--view-width);
         margin: 0 auto;
+        padding: 0 var(--view-padding);
         font-family: 'Archivo Black', sans-serif;
         font-size: clamp(1.8rem, 5vw, 3.5rem);
         font-weight: 400;
         text-transform: uppercase;
         letter-spacing: -2px;
         line-height: 1;
+        background: linear-gradient(
+          90deg,
+          #ff6b6b,
+          #feca57,
+          #48dbfb,
+          #ff9ff3,
+          #54a0ff,
+          #5f27cd,
+          #ff6b6b
+        );
+        background-size: 300% 100%;
+        animation: gradient-flow 8s linear infinite;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
 
         span {
           display: block;
@@ -113,6 +131,11 @@
           font-family: 'Space Mono', monospace;
         }
       }
+    }
+
+    @keyframes gradient-flow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
     }
 
     /* MASONRY GRID */
@@ -398,9 +421,7 @@
     .full-description {
       font-size: 0.85rem;
       line-height: 1.6;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 2px dashed var(--black);
+      margin-bottom: 1rem;
     }
 
     /* SPECTRUM */
@@ -412,8 +433,10 @@
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 0.5rem;
-      opacity: 0.7;
+      margin-bottom: 1.2rem;
+      text-decoration: underline;
+      text-decoration-style: wavy;
+      text-underline-offset: 3px;
     }
 
     .spectrum-items {
@@ -459,18 +482,19 @@
     /* CLARIFICATIONS */
     .clarifications {
       margin-top: 1.5rem;
-      padding-top: 1.5rem;
-      border-top: 2px dashed var(--black);
     }
 
     .clarifications-title {
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      text-decoration: underline;
+      text-decoration-style: wavy;
+      text-underline-offset: 3px;
     }
 
     .clarification {
@@ -520,7 +544,7 @@
 
     /* Q&A SECTION */
     .qa-wrapper {
-      margin-top: 6rem;
+      margin-top: 8rem;
       margin-left: auto;
       margin-right: auto;
       max-width: 700px;
