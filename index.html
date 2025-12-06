@@ -33,6 +33,7 @@
       --card-shadow-initial: 1.5px;
       --view-width: 1200px;
       --view-padding: 2rem;
+      --transition-duration: 0.2s; /* DEBUG: change this to adjust animation speed */
 
       @media (min-width: 640px) {
         --view-padding: 3rem;
@@ -236,7 +237,7 @@
       }
 
       &.transitioning {
-        view-transition-name: card-container;
+        view-transition-name: shared-card;
 
         .card-header {
           view-transition-name: shared-header;
@@ -248,6 +249,17 @@
 
         .card-title {
           view-transition-name: shared-title;
+          width: fit-content;
+          flex-grow: 0;
+        }
+
+        .card-toggle {
+          view-transition-name: shared-toggle;
+          margin-left: auto;
+        }
+
+        .card-preview {
+          view-transition-name: shared-body;
         }
       }
 
@@ -374,8 +386,8 @@
     }
 
     ::view-transition-group(*) {
-      animation-duration: 0.3s;
-      animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1);
+      animation-duration: var(--transition-duration);
+      animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     /* DIALOG STYLES */
@@ -388,7 +400,7 @@
       width: calc(100% - 2rem);
       max-height: 85vh;
       overflow: hidden;
-      box-shadow: none;
+      box-shadow: var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black);
       margin: auto;
       inset: 0;
 
@@ -418,7 +430,7 @@
       }
 
       &.transitioning {
-        view-transition-name: card-container;
+        view-transition-name: shared-card;
 
         .dialog-header {
           view-transition-name: shared-header;
@@ -430,6 +442,17 @@
 
         .dialog-title {
           view-transition-name: shared-title;
+          width: fit-content;
+          flex-grow: 0;
+        }
+
+        .dialog-close {
+          view-transition-name: shared-toggle;
+          margin-left: auto;
+        }
+
+        .dialog-body {
+          view-transition-name: shared-body;
         }
       }
 
@@ -494,16 +517,9 @@
     }
 
     /* View Transitions */
-    ::view-transition-group(card-container),
-    ::view-transition-group(shared-header),
-    ::view-transition-group(shared-icon),
-    ::view-transition-group(shared-title) {
-      animation-duration: 0.3s;
-      animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    }
 
-    ::view-transition-old(card-container),
-    ::view-transition-new(card-container) {
+    ::view-transition-old(shared-card),
+    ::view-transition-new(shared-card) {
       border-radius: 0.75rem;
       overflow: hidden;
     }
