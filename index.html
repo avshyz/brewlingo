@@ -33,7 +33,7 @@
       --card-shadow-initial: 1.5px;
       --view-width: 1200px;
       --view-padding: 2rem;
-      --transition-duration: .25s; /* DEBUG: change this to adjust animation speed */
+      --transition-duration: 0.2s; /* DEBUG: change this to adjust animation speed */
 
       @media (min-width: 640px) {
         --view-padding: 3rem;
@@ -386,8 +386,24 @@
       view-transition-name: var(--chip-transition-name);
     }
 
+    .card.transitioning .chip[data-value] .chip-icon {
+      view-transition-name: var(--icon-transition-name);
+    }
+
+    .card.transitioning .chip[data-value] .chip-text {
+      view-transition-name: var(--text-transition-name);
+    }
+
     dialog.transitioning .spectrum-item[data-value] {
       view-transition-name: var(--chip-transition-name);
+    }
+
+    dialog.transitioning .spectrum-item[data-value] .spectrum-icon {
+      view-transition-name: var(--icon-transition-name);
+    }
+
+    dialog.transitioning .spectrum-item[data-value] .spectrum-text {
+      view-transition-name: var(--text-transition-name);
     }
 
     ::view-transition-group(*) {
@@ -595,6 +611,15 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    .spectrum-icon {
+      display: flex;
+      align-items: center;
+    }
+
+    .spectrum-text {
+      display: inline;
     }
 
     .spectrum-desc {
@@ -843,9 +868,9 @@
       <div class="card-preview">
         <div class="card-preview-text">How cleanly flavours present themselves. Influenced by extraction evenness, grind consistency, and pouring technique.</div>
         <div class="value-chips">
-          <span class="chip" data-value="clarity-high"><span class="chip-icon"><i class="fa-solid fa-arrow-up"></i></span> High</span>
-          <span class="chip" data-value="clarity-medium"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span> Medium</span>
-          <span class="chip" data-value="clarity-low"><span class="chip-icon"><i class="fa-solid fa-arrow-down"></i></span> Low</span>
+          <span class="chip" data-value="clarity-high"><span class="chip-icon"><i class="fa-solid fa-arrow-up"></i></span><span class="chip-text">High</span></span>
+          <span class="chip" data-value="clarity-medium"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span><span class="chip-text">Medium</span></span>
+          <span class="chip" data-value="clarity-low"><span class="chip-icon"><i class="fa-solid fa-arrow-down"></i></span><span class="chip-text">Low</span></span>
         </div>
       </div>
       <div class="card-content">
@@ -858,7 +883,7 @@
             <div class="spectrum-title">Value Spectrum</div>
             <div class="spectrum-items">
               <div class="spectrum-item" data-value="clarity-high">
-                <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-arrow-up"></i></span><span class="spectrum-text">High</span></div>
                 <div class="spectrum-desc">
                   Clean, transparent, distinct flavours.
                   <div class="spectrum-cause">Possible causes: even extraction, good agitation, consistent grind.</div>
@@ -866,7 +891,7 @@
               </div>
 
               <div class="spectrum-item" data-value="clarity-medium">
-                <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-minus"></i></span><span class="spectrum-text">Medium</span></div>
                 <div class="spectrum-desc">
                   Partially blended, readable but not crisp.
                   <div class="spectrum-cause">Possible causes: mild unevenness, minor grind variability.</div>
@@ -874,7 +899,7 @@
               </div>
 
               <div class="spectrum-item" data-value="clarity-low">
-                <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-arrow-down"></i></span><span class="spectrum-text">Low</span></div>
                 <div class="spectrum-desc">
                   Muddy, cloudy, merged flavours.
                   <div class="spectrum-cause">Possible causes: uneven extraction, channeling, disrupted flow.</div>
@@ -902,9 +927,9 @@
       <div class="card-preview">
         <div class="card-preview-text">The shape of the flavour arc from beginning to middle to finish. A clean cup may still lack definition if extraction is uneven.</div>
         <div class="value-chips">
-          <span class="chip" data-value="definition-high"><span class="chip-icon"><i class="fa-solid fa-arrow-up"></i></span> High</span>
-          <span class="chip" data-value="definition-medium"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span> Medium</span>
-          <span class="chip" data-value="definition-low"><span class="chip-icon"><i class="fa-solid fa-arrow-down"></i></span> Low</span>
+          <span class="chip" data-value="definition-high"><span class="chip-icon"><i class="fa-solid fa-arrow-up"></i></span><span class="chip-text">High</span></span>
+          <span class="chip" data-value="definition-medium"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span><span class="chip-text">Medium</span></span>
+          <span class="chip" data-value="definition-low"><span class="chip-icon"><i class="fa-solid fa-arrow-down"></i></span><span class="chip-text">Low</span></span>
         </div>
       </div>
       <div class="card-content">
@@ -917,7 +942,7 @@
             <div class="spectrum-title">Value Spectrum</div>
             <div class="spectrum-items">
               <div class="spectrum-item" data-value="definition-high">
-                <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-arrow-up"></i></span><span class="spectrum-text">High</span></div>
                 <div class="spectrum-desc">
                   Clear stages with distinct progression.
                   <div class="spectrum-cause">Possible causes: balanced extraction, full solubility development.</div>
@@ -925,7 +950,7 @@
               </div>
 
               <div class="spectrum-item" data-value="definition-medium">
-                <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-minus"></i></span><span class="spectrum-text">Medium</span></div>
                 <div class="spectrum-desc">
                   Some shape but not vivid.
                   <div class="spectrum-cause">Possible causes: slight unevenness.</div>
@@ -933,7 +958,7 @@
               </div>
 
               <div class="spectrum-item" data-value="definition-low">
-                <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-arrow-down"></i></span><span class="spectrum-text">Low</span></div>
                 <div class="spectrum-desc">
                   Flat, monotone, lacking development.
                   <div class="spectrum-cause">Possible causes: underextraction, coarse grind, low temperature.</div>
@@ -961,9 +986,9 @@
       <div class="card-preview">
         <div class="card-preview-text">The quality of the acidic sensation. Good acidity contributes energy and brightness; poor acidity feels sour or unbalanced.</div>
         <div class="value-chips">
-          <span class="chip" data-value="acidity-bright"><span class="chip-icon"><i class="fa-solid fa-sun"></i></span> Bright</span>
-          <span class="chip" data-value="acidity-flat"><span class="chip-icon"><i class="fa-solid fa-circle"></i></span> Flat</span>
-          <span class="chip" data-value="acidity-sharp"><span class="chip-icon"><i class="fa-solid fa-bolt"></i></span> Sharp</span>
+          <span class="chip" data-value="acidity-bright"><span class="chip-icon"><i class="fa-solid fa-sun"></i></span><span class="chip-text">Bright</span></span>
+          <span class="chip" data-value="acidity-flat"><span class="chip-icon"><i class="fa-solid fa-circle"></i></span><span class="chip-text">Flat</span></span>
+          <span class="chip" data-value="acidity-sharp"><span class="chip-icon"><i class="fa-solid fa-bolt"></i></span><span class="chip-text">Sharp</span></span>
         </div>
       </div>
       <div class="card-content">
@@ -976,7 +1001,7 @@
             <div class="spectrum-title">Value Spectrum</div>
             <div class="spectrum-items">
               <div class="spectrum-item" data-value="acidity-bright">
-                <div class="spectrum-label"><i class="fa-solid fa-sun"></i> Bright</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-sun"></i></span><span class="spectrum-text">Bright</span></div>
                 <div class="spectrum-desc">
                   Lively, sparkling, clean.
                   <div class="spectrum-cause">Possible causes: proper extraction, balanced sweetness.</div>
@@ -984,7 +1009,7 @@
               </div>
 
               <div class="spectrum-item" data-value="acidity-flat">
-                <div class="spectrum-label"><i class="fa-solid fa-circle"></i> Flat</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-circle"></i></span><span class="spectrum-text">Flat</span></div>
                 <div class="spectrum-desc">
                   Dull, muted, lacking energy.
                   <div class="spectrum-cause">Possible causes: coarse grind, low temperature, weak extraction.</div>
@@ -992,7 +1017,7 @@
               </div>
 
               <div class="spectrum-item" data-value="acidity-sharp">
-                <div class="spectrum-label"><i class="fa-solid fa-bolt"></i> Sharp</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-bolt"></i></span><span class="spectrum-text">Sharp</span></div>
                 <div class="spectrum-desc">
                   Sour, poking, unbalanced.
                   <div class="spectrum-cause">Possible causes: underextraction, insufficient sweetness.</div>
@@ -1020,9 +1045,9 @@
       <div class="card-preview">
         <div class="card-preview-text">Perceived sweetness from extraction, not literal sugar. It stabilizes acidity and fills the mid-palate.</div>
         <div class="value-chips">
-          <span class="chip" data-value="sweetness-high"><span class="chip-icon"><i class="fa-solid fa-arrow-up"></i></span> High</span>
-          <span class="chip" data-value="sweetness-medium"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span> Medium</span>
-          <span class="chip" data-value="sweetness-low"><span class="chip-icon"><i class="fa-solid fa-arrow-down"></i></span> Low</span>
+          <span class="chip" data-value="sweetness-high"><span class="chip-icon"><i class="fa-solid fa-arrow-up"></i></span><span class="chip-text">High</span></span>
+          <span class="chip" data-value="sweetness-medium"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span><span class="chip-text">Medium</span></span>
+          <span class="chip" data-value="sweetness-low"><span class="chip-icon"><i class="fa-solid fa-arrow-down"></i></span><span class="chip-text">Low</span></span>
         </div>
       </div>
       <div class="card-content">
@@ -1035,7 +1060,7 @@
             <div class="spectrum-title">Value Spectrum</div>
             <div class="spectrum-items">
               <div class="spectrum-item" data-value="sweetness-high">
-                <div class="spectrum-label"><i class="fa-solid fa-arrow-up"></i> High</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-arrow-up"></i></span><span class="spectrum-text">High</span></div>
                 <div class="spectrum-desc">
                   Rounded, integrated, rich sweetness.
                   <div class="spectrum-cause">Possible causes: strong extraction, consistent flow, adequate heat.</div>
@@ -1043,7 +1068,7 @@
               </div>
 
               <div class="spectrum-item" data-value="sweetness-medium">
-                <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-minus"></i></span><span class="spectrum-text">Medium</span></div>
                 <div class="spectrum-desc">
                   Balanced but not rich.
                   <div class="spectrum-cause">Possible causes: moderate extraction.</div>
@@ -1051,7 +1076,7 @@
               </div>
 
               <div class="spectrum-item" data-value="sweetness-low">
-                <div class="spectrum-label"><i class="fa-solid fa-arrow-down"></i> Low</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-arrow-down"></i></span><span class="spectrum-text">Low</span></div>
                 <div class="spectrum-desc">
                   Thin, sour, muted.
                   <div class="spectrum-cause">Possible causes: underextraction, coarse grind.</div>
@@ -1073,9 +1098,9 @@
       <div class="card-preview">
         <div class="card-preview-text">Tactile weight and texture. Becomes meaningful when paired with finish and sweetness.</div>
         <div class="value-chips">
-          <span class="chip" data-value="body-light"><span class="chip-icon"><i class="fa-solid fa-feather"></i></span> Light</span>
-          <span class="chip" data-value="body-medium"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span> Medium</span>
-          <span class="chip" data-value="body-heavy"><span class="chip-icon"><i class="fa-solid fa-dumbbell"></i></span> Heavy</span>
+          <span class="chip" data-value="body-light"><span class="chip-icon"><i class="fa-solid fa-feather"></i></span><span class="chip-text">Light</span></span>
+          <span class="chip" data-value="body-medium"><span class="chip-icon"><i class="fa-solid fa-minus"></i></span><span class="chip-text">Medium</span></span>
+          <span class="chip" data-value="body-heavy"><span class="chip-icon"><i class="fa-solid fa-dumbbell"></i></span><span class="chip-text">Heavy</span></span>
         </div>
       </div>
       <div class="card-content">
@@ -1088,7 +1113,7 @@
             <div class="spectrum-title">Value Spectrum</div>
             <div class="spectrum-items">
               <div class="spectrum-item" data-value="body-light">
-                <div class="spectrum-label"><i class="fa-solid fa-feather"></i> Light</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-feather"></i></span><span class="spectrum-text">Light</span></div>
                 <div class="spectrum-desc">
                   Watery, tea-like.
                   <div class="spectrum-cause">Possible causes: underextraction, low agitation, low dose.</div>
@@ -1096,7 +1121,7 @@
               </div>
 
               <div class="spectrum-item" data-value="body-medium">
-                <div class="spectrum-label"><i class="fa-solid fa-minus"></i> Medium</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-minus"></i></span><span class="spectrum-text">Medium</span></div>
                 <div class="spectrum-desc">
                   Balanced, typical for washed coffees.
                   <div class="spectrum-cause">Possible causes: stable extraction.</div>
@@ -1104,7 +1129,7 @@
               </div>
 
               <div class="spectrum-item" data-value="body-heavy">
-                <div class="spectrum-label"><i class="fa-solid fa-dumbbell"></i> Heavy</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-dumbbell"></i></span><span class="spectrum-text">Heavy</span></div>
                 <div class="spectrum-desc">
                   Thick, syrupy.
                   <div class="spectrum-cause">Possible causes: finer grind, natural processing, higher TDS.</div>
@@ -1126,11 +1151,11 @@
       <div class="card-preview">
         <div class="card-preview-text">How acidity, sweetness, and finish integrate across the sip. Balanced structure forms a cohesive arc.</div>
         <div class="value-chips">
-          <span class="chip" data-value="structure-balanced"><span class="chip-icon"><i class="fa-solid fa-check"></i></span> Balanced</span>
-          <span class="chip" data-value="structure-hollow"><span class="chip-icon"><i class="fa-solid fa-circle-notch"></i></span> Hollow</span>
-          <span class="chip" data-value="structure-sharp"><span class="chip-icon"><i class="fa-solid fa-bolt"></i></span> Sharp</span>
-          <span class="chip" data-value="structure-flat"><span class="chip-icon"><i class="fa-solid fa-grip-lines"></i></span> Flat</span>
-          <span class="chip" data-value="structure-collapsing"><span class="chip-icon"><i class="fa-solid fa-arrow-trend-down"></i></span> Collapsing</span>
+          <span class="chip" data-value="structure-balanced"><span class="chip-icon"><i class="fa-solid fa-check"></i></span><span class="chip-text">Balanced</span></span>
+          <span class="chip" data-value="structure-hollow"><span class="chip-icon"><i class="fa-solid fa-circle-notch"></i></span><span class="chip-text">Hollow</span></span>
+          <span class="chip" data-value="structure-sharp"><span class="chip-icon"><i class="fa-solid fa-bolt"></i></span><span class="chip-text">Sharp</span></span>
+          <span class="chip" data-value="structure-flat"><span class="chip-icon"><i class="fa-solid fa-grip-lines"></i></span><span class="chip-text">Flat</span></span>
+          <span class="chip" data-value="structure-collapsing"><span class="chip-icon"><i class="fa-solid fa-arrow-trend-down"></i></span><span class="chip-text">Collapsing</span></span>
         </div>
       </div>
       <div class="card-content">
@@ -1143,7 +1168,7 @@
             <div class="spectrum-title">Value Spectrum</div>
             <div class="spectrum-items">
               <div class="spectrum-item" data-value="structure-balanced">
-                <div class="spectrum-label"><i class="fa-solid fa-check"></i> Balanced</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-check"></i></span><span class="spectrum-text">Balanced</span></div>
                 <div class="spectrum-desc">
                   Complete arc with proper integration.
                   <div class="spectrum-cause">Possible causes: proper extraction, consistent grind, stable flow.</div>
@@ -1151,7 +1176,7 @@
               </div>
 
               <div class="spectrum-item" data-value="structure-hollow">
-                <div class="spectrum-label"><i class="fa-solid fa-circle-notch"></i> Hollow</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-circle-notch"></i></span><span class="spectrum-text">Hollow</span></div>
                 <div class="spectrum-desc">
                   Empty mid-palate; flavour at start and end only.
                   <div class="spectrum-cause">Possible causes: underextraction, uneven flow, coarse grind.</div>
@@ -1159,7 +1184,7 @@
               </div>
 
               <div class="spectrum-item" data-value="structure-sharp">
-                <div class="spectrum-label"><i class="fa-solid fa-bolt"></i> Sharp</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-bolt"></i></span><span class="spectrum-text">Sharp</span></div>
                 <div class="spectrum-desc">
                   Acidity dominates early too aggressively.
                   <div class="spectrum-cause">Possible causes: early-stage underextraction.</div>
@@ -1167,7 +1192,7 @@
               </div>
 
               <div class="spectrum-item" data-value="structure-flat">
-                <div class="spectrum-label"><i class="fa-solid fa-grip-lines"></i> Flat</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-grip-lines"></i></span><span class="spectrum-text">Flat</span></div>
                 <div class="spectrum-desc">
                   No development through the sip.
                   <div class="spectrum-cause">Possible causes: coarse grind, low temperature.</div>
@@ -1175,7 +1200,7 @@
               </div>
 
               <div class="spectrum-item" data-value="structure-collapsing">
-                <div class="spectrum-label"><i class="fa-solid fa-arrow-trend-down"></i> Collapsing</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-arrow-trend-down"></i></span><span class="spectrum-text">Collapsing</span></div>
                 <div class="spectrum-desc">
                   Starts well but ends weak, dry, or bitter.
                   <div class="spectrum-cause">Possible causes: uneven extraction, fines overextracting.</div>
@@ -1214,12 +1239,12 @@
       <div class="card-preview">
         <div class="card-preview-text">What remains after swallowing: duration, flavour, and tactile sensations. Often the fastest indicator of extraction issues.</div>
         <div class="value-chips">
-          <span class="chip" data-value="finish-quick"><span class="chip-icon"><i class="fa-solid fa-forward-fast"></i></span> Quick</span>
-          <span class="chip" data-value="finish-normal"><span class="chip-icon"><i class="fa-solid fa-check"></i></span> Normal</span>
-          <span class="chip" data-value="finish-sweet"><span class="chip-icon"><i class="fa-solid fa-heart"></i></span> Ling. Sweet</span>
-          <span class="chip" data-value="finish-dry"><span class="chip-icon"><i class="fa-solid fa-droplet-slash"></i></span> Ling. Dry</span>
-          <span class="chip" data-value="finish-astringent"><span class="chip-icon"><i class="fa-solid fa-xmark"></i></span> Astringent</span>
-          <span class="chip" data-value="finish-bitter"><span class="chip-icon"><i class="fa-solid fa-skull"></i></span> Bitter</span>
+          <span class="chip" data-value="finish-quick"><span class="chip-icon"><i class="fa-solid fa-forward-fast"></i></span><span class="chip-text">Quick</span></span>
+          <span class="chip" data-value="finish-normal"><span class="chip-icon"><i class="fa-solid fa-check"></i></span><span class="chip-text">Normal</span></span>
+          <span class="chip" data-value="finish-sweet"><span class="chip-icon"><i class="fa-solid fa-heart"></i></span><span class="chip-text">Ling. Sweet</span></span>
+          <span class="chip" data-value="finish-dry"><span class="chip-icon"><i class="fa-solid fa-droplet-slash"></i></span><span class="chip-text">Ling. Dry</span></span>
+          <span class="chip" data-value="finish-astringent"><span class="chip-icon"><i class="fa-solid fa-xmark"></i></span><span class="chip-text">Astringent</span></span>
+          <span class="chip" data-value="finish-bitter"><span class="chip-icon"><i class="fa-solid fa-skull"></i></span><span class="chip-text">Bitter</span></span>
         </div>
       </div>
       <div class="card-content">
@@ -1232,7 +1257,7 @@
             <div class="spectrum-title">Value Spectrum</div>
             <div class="spectrum-items">
               <div class="spectrum-item" data-value="finish-quick">
-                <div class="spectrum-label"><i class="fa-solid fa-forward-fast"></i> Quick</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-forward-fast"></i></span><span class="spectrum-text">Quick</span></div>
                 <div class="spectrum-desc">
                   Flavour disappears rapidly.
                   <div class="spectrum-cause">Possible causes: underextraction, coarse grind.</div>
@@ -1240,7 +1265,7 @@
               </div>
 
               <div class="spectrum-item" data-value="finish-normal">
-                <div class="spectrum-label"><i class="fa-solid fa-check"></i> Normal</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-check"></i></span><span class="spectrum-text">Normal</span></div>
                 <div class="spectrum-desc">
                   Pleasant, balanced fade.
                   <div class="spectrum-cause">Possible causes: proper extraction.</div>
@@ -1248,7 +1273,7 @@
               </div>
 
               <div class="spectrum-item" data-value="finish-sweet">
-                <div class="spectrum-label"><i class="fa-solid fa-heart"></i> Lingering Sweet</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-heart"></i></span><span class="spectrum-text">Lingering Sweet</span></div>
                 <div class="spectrum-desc">
                   Sweetness remains.
                   <div class="spectrum-cause">Possible causes: excellent extraction.</div>
@@ -1256,7 +1281,7 @@
               </div>
 
               <div class="spectrum-item" data-value="finish-dry">
-                <div class="spectrum-label"><i class="fa-solid fa-droplet-slash"></i> Lingering Dry</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-droplet-slash"></i></span><span class="spectrum-text">Lingering Dry</span></div>
                 <div class="spectrum-desc">
                   Light, temporary dryness.
                   <div class="spectrum-cause">Possible causes: fines overextracting.</div>
@@ -1264,7 +1289,7 @@
               </div>
 
               <div class="spectrum-item" data-value="finish-astringent">
-                <div class="spectrum-label"><i class="fa-solid fa-xmark"></i> Astringent</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-xmark"></i></span><span class="spectrum-text">Astringent</span></div>
                 <div class="spectrum-desc">
                   Strong, rough, tannic dryness.
                   <div class="spectrum-cause">Possible causes: major overextraction, channeling.</div>
@@ -1272,7 +1297,7 @@
               </div>
 
               <div class="spectrum-item" data-value="finish-bitter">
-                <div class="spectrum-label"><i class="fa-solid fa-skull"></i> Bitter Finish</div>
+                <div class="spectrum-label"><span class="spectrum-icon"><i class="fa-solid fa-skull"></i></span><span class="spectrum-text">Bitter Finish</span></div>
                 <div class="spectrum-desc">
                   Lingering bitterness.
                   <div class="spectrum-cause">Possible causes: overextraction, too fine grind.</div>
@@ -1378,12 +1403,16 @@
       const chips = card.querySelectorAll('.chip[data-value]');
       chips.forEach(chip => {
         chip.style.setProperty('--chip-transition-name', chip.dataset.value);
+        chip.style.setProperty('--icon-transition-name', chip.dataset.value + '-icon');
+        chip.style.setProperty('--text-transition-name', chip.dataset.value + '-text');
       });
 
       // Set transition names on spectrum items in dialog
       const spectrumItems = dialogEl.querySelectorAll('.spectrum-item[data-value]');
       spectrumItems.forEach(item => {
         item.style.setProperty('--chip-transition-name', item.dataset.value);
+        item.style.setProperty('--icon-transition-name', item.dataset.value + '-icon');
+        item.style.setProperty('--text-transition-name', item.dataset.value + '-text');
       });
     }
 
@@ -1391,11 +1420,15 @@
       const chips = card.querySelectorAll('.chip[data-value]');
       chips.forEach(chip => {
         chip.style.removeProperty('--chip-transition-name');
+        chip.style.removeProperty('--icon-transition-name');
+        chip.style.removeProperty('--text-transition-name');
       });
 
       const spectrumItems = dialogEl.querySelectorAll('.spectrum-item[data-value]');
       spectrumItems.forEach(item => {
         item.style.removeProperty('--chip-transition-name');
+        item.style.removeProperty('--icon-transition-name');
+        item.style.removeProperty('--text-transition-name');
       });
     }
 
