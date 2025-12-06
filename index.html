@@ -126,16 +126,17 @@
         line-height: 1;
         background: linear-gradient(
           90deg,
-          #ff6b6b,
-          #feca57,
-          #48dbfb,
-          #ff9ff3,
-          #54a0ff,
-          #5f27cd,
-          #ff6b6b
+          #000000 0%,
+          #000000 33%,
+          #00FFFF 50%,
+          #FF00FF 66%,
+          #FFFF00 83%,
+          #000000 100%
         );
         background-size: 300% 100%;
-        animation: gradient-flow 8s linear infinite;
+        animation: gradient-flow 16s linear infinite;
+        animation-delay: 2s;
+        background-position: 0% 50%;
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
