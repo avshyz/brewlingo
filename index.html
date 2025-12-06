@@ -380,7 +380,8 @@
 
     /* DIALOG STYLES */
     dialog {
-      border: var(--border-thick);
+      border: var(--card-border) solid var(--black);
+      border-radius: 0.75rem;
       background: var(--white);
       padding: 0;
       max-width: 600px;
@@ -467,15 +468,15 @@
     }
 
     .dialog-close {
-      width: 36px;
-      height: 36px;
+      width: 28px;
+      height: 28px;
       border: var(--border);
       background: var(--white);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       cursor: pointer;
       flex-shrink: 0;
       transition: background 0.15s ease;
@@ -499,6 +500,18 @@
     ::view-transition-group(shared-title) {
       animation-duration: 0.3s;
       animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    ::view-transition-old(card-container),
+    ::view-transition-new(card-container) {
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
+
+    ::view-transition-old(shared-header),
+    ::view-transition-new(shared-header) {
+      border-radius: 0.75rem 0.75rem 0 0;
+      overflow: hidden;
     }
 
 
