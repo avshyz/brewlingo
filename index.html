@@ -169,6 +169,15 @@
         grid-template-columns: repeat(2, 1fr);
       }
 
+      /* Center lonely last item in 2-col layout only */
+      @media (min-width: 640px) and (max-width: 1023px) {
+        .card:last-child:nth-child(odd) {
+          grid-column: 1 / -1;
+          max-width: 50%;
+          justify-self: center;
+        }
+      }
+
       @media (min-width: 1024px) {
         grid-template-columns: repeat(3, 1fr);
 
@@ -297,6 +306,24 @@
       font-size: 0.85rem;
       line-height: 1.5;
       margin-bottom: 0.75rem;
+      background: linear-gradient(
+        -70deg,
+        #000000 0%,
+        #000000 40%,
+        #FFFF00 50%,
+        #000000 60%,
+        #000000 100%
+      );
+      background-size: 300% 100%;
+      background-position: 0% 50%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      transition: background-position 0.4s ease-out;
+    }
+
+    .card:hover .card-preview-text {
+      animation: gradient-flow 5s linear 4s infinite;
     }
 
     .card-content {
