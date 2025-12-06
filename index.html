@@ -265,6 +265,10 @@
         .card-preview {
           view-transition-name: shared-body;
         }
+
+        .card-preview-text {
+          view-transition-name: shared-description;
+        }
       }
 
       &[data-color="yellow"] .card-header { background: var(--yellow); }
@@ -499,6 +503,10 @@
         .dialog-body {
           view-transition-name: shared-body;
         }
+
+        .full-description {
+          view-transition-name: shared-description;
+        }
       }
 
       &.opening {
@@ -577,7 +585,24 @@
       overflow: hidden;
     }
 
+    /* Crossfade for description text (different content between preview and full) */
+    ::view-transition-old(shared-description) {
+      animation: fade-out var(--transition-duration) ease-out forwards;
+    }
 
+    ::view-transition-new(shared-description) {
+      animation: fade-in var(--transition-duration) ease-out forwards;
+    }
+
+    @keyframes fade-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
 
     @keyframes dialog-morph-in {
       from { opacity: 0; transform: scale(0.85); }
@@ -844,7 +869,7 @@
         content: '';
         position: absolute;
         inset: 0;
-        background: radial-gradient(ellipse at center, var(--white) 0%, var(--white) 40%, transparent 70%);
+        background: radial-gradient(ellipse 80% 150% at center, var(--white) 0%, var(--white) 20%, transparent 60%);
         z-index: -1;
       }
 
