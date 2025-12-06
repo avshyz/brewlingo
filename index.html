@@ -28,6 +28,9 @@
       --red: #ef4444;
       --border: 2px solid var(--black);
       --border-thick: 5px solid var(--black);
+      --card-border: 1.5px;
+      --card-shadow-offset: 3px;
+      --card-shadow-initial: 1.5px;
       --view-width: 1200px;
       --view-padding: 2rem;
 
@@ -179,13 +182,13 @@
     /* CARDS */
     .card {
       background: var(--white);
-      border: var(--border);
+      border: var(--card-border) solid var(--black);
       border-radius: 0.75rem;
       position: relative;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       overflow: hidden;
       cursor: pointer;
-      box-shadow: 1px 1px 0 var(--black);
+      box-shadow: var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black);
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
@@ -211,14 +214,15 @@
       }
 
       &:hover {
-        transform: translate(-4px, -4px);
-        box-shadow: 5px 5px 0 var(--black);
+        transform: translate(calc(var(--card-shadow-offset) * -1), calc(var(--card-shadow-offset) * -1));
+        box-shadow: calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black);
 
         .card-title,
         .card-icon,
         .card-toggle {
           text-shadow:
-            -2px -2px 0 cyan, 2px 2px 0 magenta;
+            -1.5px -1.5px 0 cyan,
+            var(--card-shadow-offset) var(--card-shadow-offset) 0 magenta;
         }
       }
 
@@ -316,7 +320,11 @@
       font-weight: 700;
       text-transform: uppercase;
       background: var(--white);
-      box-shadow: 3px 3px 0 var(--black);
+      transition: box-shadow 0.2s ease;
+    }
+
+    .card:hover .chip {
+      box-shadow: var(--card-shadow-offset) var(--card-shadow-offset) 0 var(--black);
     }
 
     .chip-icon {
@@ -329,8 +337,8 @@
 
     .card:hover .chip-icon {
       text-shadow:
-        -1px -1px 0 cyan,
-        1px 1px 0 magenta;
+        -2px -2px 0 cyan,
+        var(--card-shadow-offset) var(--card-shadow-offset) 0 magenta;
     }
 
     /* Chip to Spectrum view transitions */
