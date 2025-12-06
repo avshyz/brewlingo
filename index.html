@@ -29,7 +29,11 @@
       --border: 3px solid var(--black);
       --border-thick: 5px solid var(--black);
       --view-width: 1200px;
-      --view-padding: 1rem;
+      --view-padding: 2rem;
+
+      @media (min-width: 640px) {
+        --view-padding: 3rem;
+      }
     }
 
     body {
@@ -98,8 +102,7 @@
     header {
       background: #FF4D1F;
       background-clip: padding-box;
-      padding: 4.5rem 2rem;
-      padding-bottom: 2.5rem;
+      padding: 4.5rem 0 2.5rem;
       margin-bottom: 2rem;
       position: relative;
       border-bottom: 16px solid transparent;
@@ -111,11 +114,10 @@
         margin: 0 auto;
         padding: 0 var(--view-padding);
         font-family: 'Archivo Black', sans-serif;
-        font-size: clamp(1.8rem, 5vw, 3.5rem);
+        font-size: 3.5rem;
 
         @media (max-width: 640px) {
           font-size: clamp(2.8rem, 8vw, 3.5rem);
-          padding: 0;
           text-align: center;
         }
         font-weight: 400;
@@ -153,26 +155,30 @@
       100% { background-position: 300% 50%; }
     }
 
-    /* MASONRY GRID */
+    /* GRID */
     .grid {
-      columns: 1;
-      column-gap: 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
 
       @media (min-width: 640px) {
-        columns: 2;
+        grid-template-columns: repeat(2, 1fr);
       }
 
       @media (min-width: 1024px) {
-        columns: 3;
+        grid-template-columns: repeat(3, 1fr);
+
+        /* Center lonely last item in 3-col layout */
+        .card:last-child:nth-child(3n+1) {
+          grid-column: 2;
+        }
       }
     }
 
     /* CARDS */
     .card {
-      break-inside: avoid;
       background: var(--white);
       border: var(--border-thick);
-      margin-bottom: 1.5rem;
       position: relative;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       box-shadow: 6px 6px 0 var(--black);
