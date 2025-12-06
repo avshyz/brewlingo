@@ -818,15 +818,37 @@
     /* FOOTER */
     footer {
       margin-top: 2rem;
-      padding: 1rem;
-      text-align: center;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
       font-size: 0.75rem;
-      opacity: 0.7;
+      background: linear-gradient(
+        90deg,
+        #000000 0%,
+        #000000 33%,
+        #00FFFF 50%,
+        #FF00FF 66%,
+        #FFFF00 83%,
+        #000000 100%
+      );
+      background-size: 300% 100%;
+      animation: gradient-flow 16s linear infinite;
+      background-position: 0% 50%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
 
-      span {
-        display: inline-block;
-        margin: 0 0.5rem;
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at center, var(--white) 0%, var(--white) 40%, transparent 70%);
+        z-index: -1;
       }
+
+      position: relative;
     }
 
     /* TAP HINT */
@@ -1390,7 +1412,9 @@
   </div>
 
   <footer>
-    <span>☕</span> Brewlingo <span>✦</span> Barista Reference <span>◆</span>
+    <div>Brewlingo</div>
+    <div>·</div>
+    <div>Barista Reference</div>
   </footer>
   </div>
 
