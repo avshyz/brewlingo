@@ -33,7 +33,7 @@
       --card-shadow-initial: 1.5px;
       --view-width: 1200px;
       --view-padding: 2rem;
-      --transition-duration: 5s; /* DEBUG: change this to adjust animation speed */
+      --transition-duration: .25s; /* DEBUG: change this to adjust animation speed */
 
       @media (min-width: 640px) {
         --view-padding: 3rem;
@@ -258,6 +258,10 @@
           margin-left: auto;
         }
 
+        &.closing .card-toggle {
+          transform: rotate(90deg);
+        }
+
         .card-preview {
           view-transition-name: shared-body;
         }
@@ -478,7 +482,7 @@
     }
 
     .dialog-icon {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       flex-shrink: 0;
     }
 
@@ -505,6 +509,7 @@
       cursor: pointer;
       flex-shrink: 0;
       transition: background 0.15s ease;
+      transform: rotate(45deg);
 
       &:hover {
         background: var(--black);
@@ -532,32 +537,6 @@
       overflow: hidden;
     }
 
-    /* Toggle rotation: + becomes × with 45deg rotation */
-    ::view-transition-old(shared-toggle) {
-      animation: toggle-rotate-out var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    ::view-transition-new(shared-toggle) {
-      animation: toggle-rotate-in var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    @keyframes toggle-rotate-out {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(45deg);
-      }
-    }
-
-    @keyframes toggle-rotate-in {
-      from {
-        transform: rotate(-45deg);
-      }
-      to {
-        transform: rotate(0deg);
-      }
-    }
 
 
     @keyframes dialog-morph-in {
@@ -1371,7 +1350,7 @@
     <div class="dialog-header">
       <span class="dialog-icon"></span>
       <span class="dialog-title"></span>
-      <button class="dialog-close" onclick="closeDialog()">&times;</button>
+      <button class="dialog-close" onclick="closeDialog()">+</button>
     </div>
     <div class="dialog-body"></div>
   </dialog>
@@ -1481,13 +1460,13 @@
           // In callback: remove from dialog, add to card
           // This makes card the "new" state target
           dialog.classList.remove('transitioning');
-          activeCard.classList.add('transitioning');
+          activeCard.classList.add('transitioning', 'closing');
           dialog.close();
           document.body.classList.remove('dialog-open');
         });
 
         transition.finished.then(() => {
-          activeCard.classList.remove('transitioning');
+          activeCard.classList.remove('transitioning', 'closing');
           clearChipTransitionNames(activeCard, dialog);
           activeCard = null;
         });
