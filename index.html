@@ -33,7 +33,7 @@
       --card-shadow-initial: 1.5px;
       --view-width: 1200px;
       --view-padding: 2rem;
-      --transition-duration: 0.2s; /* DEBUG: change this to adjust animation speed */
+      --transition-duration: 0.3s; /* DEBUG: change this to adjust animation speed */
 
       @media (min-width: 640px) {
         --view-padding: 3rem;
@@ -409,6 +409,30 @@
     ::view-transition-group(*) {
       animation-duration: var(--transition-duration);
       animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Prevent crossfade doubling on bordered elements */
+    ::view-transition-old(*) {
+      animation: none;
+      opacity: 0;
+    }
+
+    ::view-transition-new(*) {
+      animation: none;
+      opacity: 1;
+    }
+
+    /* Swap keyframes for closing (injected via JS) */
+    @keyframes swap-out {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes swap-in {
+      0% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 1; }
     }
 
     /* DIALOG STYLES */
@@ -1489,6 +1513,19 @@
         dialog.classList.add('transitioning');
         setChipTransitionNames(activeCard, dialog);
 
+        // Inject swap CSS for closing transition (swap at 50%)
+        const closeStyles = document.createElement('style');
+        closeStyles.id = 'vt-close-styles';
+        closeStyles.textContent = `
+          ::view-transition-old(*) {
+            animation: swap-out var(--transition-duration) ease-out forwards !important;
+          }
+          ::view-transition-new(*) {
+            animation: swap-in var(--transition-duration) ease-out forwards !important;
+          }
+        `;
+        document.head.appendChild(closeStyles);
+
         const transition = document.startViewTransition(() => {
           // In callback: remove from dialog, add to card
           // This makes card the "new" state target
@@ -1501,6 +1538,7 @@
         transition.finished.then(() => {
           activeCard.classList.remove('transitioning', 'closing');
           clearChipTransitionNames(activeCard, dialog);
+          closeStyles.remove();
           activeCard = null;
         });
       } else {
