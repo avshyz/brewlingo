@@ -725,33 +725,68 @@
     }
 
     .comparisons {
+      list-style: none;
+      padding: 0;
+      margin: 0;
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.5rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1.5rem;
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        border-left: 1px dashed rgba(26, 26, 26, 0.25);
+        transform: translateX(-50%);
+      }
 
       @media (max-width: 500px) {
         grid-template-columns: 1fr;
+
+        &::before {
+          display: none;
+        }
       }
-    }
 
-    .comparison {
-      background: #f0f0e8;
-      border: 2px solid var(--black);
-      padding: 0.75rem;
-      font-size: 0.8rem;
-      margin: 0;
+      > li {
+        font-size: 0.8rem;
+        line-height: 1.5;
+        margin-bottom: 0.5rem;
+        padding-left: 1rem;
+        position: relative;
 
-      p {
-        margin-bottom: 0.25rem;
-        line-height: 1.4;
+        &::before {
+          content: '→';
+          position: absolute;
+          left: 0;
+          font-weight: 700;
+        }
+
+        > ul {
+          list-style: none;
+          padding: 0;
+          margin: 0.25rem 0 0 0.5rem;
+
+          > li {
+            font-size: 0.75rem;
+            line-height: 1.4;
+            margin-bottom: 0.15rem;
+            padding-left: 1rem;
+            position: relative;
+
+            &::before {
+              content: '·';
+              position: absolute;
+              left: 0;
+              font-weight: 700;
+            }
+          }
+        }
       }
-    }
-
-    .comparison-title {
-      font-weight: 700;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      margin-bottom: 0.5rem;
     }
 
     /* Q&A SECTION */
@@ -1414,19 +1449,20 @@
 
           <div class="clarifications">
             <div class="clarifications-title"><i class="fa-solid fa-lightbulb"></i> Clarifications</div>
-            <div class="comparisons">
-              <div class="comparison">
-                <div class="comparison-title">Sharp vs Flat</div>
-                <p><strong>Sharp</strong> = excessive early acidity.</p>
-                <p><strong>Flat</strong> = no development at all.</p>
-              </div>
-
-              <div class="comparison">
-                <div class="comparison-title">Hollow vs Collapsing</div>
-                <p><strong>Hollow</strong> = missing middle.</p>
-                <p><strong>Collapsing</strong> = finish fails after a good start.</p>
-              </div>
-            </div>
+            <ul class="comparisons">
+              <li><strong>Sharp vs Flat</strong>
+                <ul>
+                  <li><strong>Sharp</strong> = excessive early acidity</li>
+                  <li><strong>Flat</strong> = no development at all</li>
+                </ul>
+              </li>
+              <li><strong>Hollow vs Collapsing</strong>
+                <ul>
+                  <li><strong>Hollow</strong> = missing middle</li>
+                  <li><strong>Collapsing</strong> = finish fails after a good start</li>
+                </ul>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -1516,33 +1552,34 @@
 
           <div class="clarifications">
             <div class="clarifications-title"><i class="fa-solid fa-lightbulb"></i> Clarifications</div>
-            <div class="comparisons">
-              <div class="comparison">
-                <div class="comparison-title">Lingering Dry vs Astringent</div>
-                <p><strong>Lingering Dry</strong> = mild dryness, short-lived.</p>
-                <p><strong>Astringent</strong> = rough, gripping dryness, long-lasting.</p>
-              </div>
-
-              <div class="comparison">
-                <div class="comparison-title">Quick vs Dry Finish</div>
-                <p><strong>Quick</strong> = flavour ends suddenly.</p>
-                <p><strong>Dry</strong> = tactile dryness.</p>
-              </div>
-
-              <div class="comparison">
-                <div class="comparison-title">Bitterness vs Astringency vs Dry Finish</div>
-                <p><strong>Bitterness</strong> = flavour.</p>
-                <p><strong>Dry finish</strong> = mild dryness.</p>
-                <p><strong>Astringency</strong> = harsh dryness.</p>
-              </div>
-
-              <div class="comparison">
-                <div class="comparison-title">Thin vs Empty vs Bitter Finish</div>
-                <p><strong>Thin</strong> = weak remaining flavour.</p>
-                <p><strong>Empty</strong> = flavour disappears entirely.</p>
-                <p><strong>Bitter Finish</strong> = bitterness remains.</p>
-              </div>
-            </div>
+            <ul class="comparisons">
+              <li><strong>Lingering Dry vs Astringent</strong>
+                <ul>
+                  <li><strong>Lingering Dry</strong> = mild dryness, short-lived</li>
+                  <li><strong>Astringent</strong> = rough, gripping dryness, long-lasting</li>
+                </ul>
+              </li>
+              <li><strong>Quick vs Dry Finish</strong>
+                <ul>
+                  <li><strong>Quick</strong> = flavour ends suddenly</li>
+                  <li><strong>Dry</strong> = tactile dryness</li>
+                </ul>
+              </li>
+              <li><strong>Bitterness vs Astringency vs Dry Finish</strong>
+                <ul>
+                  <li><strong>Bitterness</strong> = flavour</li>
+                  <li><strong>Dry finish</strong> = mild dryness</li>
+                  <li><strong>Astringency</strong> = harsh dryness</li>
+                </ul>
+              </li>
+              <li><strong>Thin vs Empty vs Bitter Finish</strong>
+                <ul>
+                  <li><strong>Thin</strong> = weak remaining flavour</li>
+                  <li><strong>Empty</strong> = flavour disappears entirely</li>
+                  <li><strong>Bitter Finish</strong> = bitterness remains</li>
+                </ul>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
