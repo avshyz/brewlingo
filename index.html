@@ -33,7 +33,7 @@
       --card-shadow-initial: 1.5px;
       --view-width: 1200px;
       --view-padding: 2rem;
-      --transition-duration: 0.2s; /* DEBUG: change this to adjust animation speed */
+      --transition-duration: 5s; /* DEBUG: change this to adjust animation speed */
 
       @media (min-width: 640px) {
         --view-padding: 3rem;
@@ -300,6 +300,7 @@
       width: 28px;
       height: 28px;
       border: var(--border);
+      border-radius: 50%;
       background: var(--white);
       display: flex;
       align-items: center;
@@ -494,6 +495,7 @@
       width: 28px;
       height: 28px;
       border: var(--border);
+      border-radius: 50%;
       background: var(--white);
       display: flex;
       align-items: center;
@@ -528,6 +530,33 @@
     ::view-transition-new(shared-header) {
       border-radius: 0.75rem 0.75rem 0 0;
       overflow: hidden;
+    }
+
+    /* Toggle rotation: + becomes × with 45deg rotation */
+    ::view-transition-old(shared-toggle) {
+      animation: toggle-rotate-out var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    ::view-transition-new(shared-toggle) {
+      animation: toggle-rotate-in var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes toggle-rotate-out {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(45deg);
+      }
+    }
+
+    @keyframes toggle-rotate-in {
+      from {
+        transform: rotate(-45deg);
+      }
+      to {
+        transform: rotate(0deg);
+      }
     }
 
 
