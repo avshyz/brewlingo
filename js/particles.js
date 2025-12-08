@@ -18,16 +18,18 @@ const CONFIG = {
   beanCount: isMobile ? 100 : 200,
   driftSpeed: 0.5,
   rotationSpeed: 3,
-  scaleMin: 0.16,
-  scaleMax: 0.4,
+  scaleMin: 0.05,
+  scaleMax: 0.48,
   depthMin: -5,
   depthMax: 2,
   spreadX: 12,
   spreadY: 8,
-  staggerDelay: 11,
-  animationDuration: 500,
-  overshoot: 1.5,
-  cmykOffset: 0.004
+  staggerDelay: 10,
+  animationDuration: 700,
+  overshoot: 2,
+  cmykOffset: 0.004,
+  creaseWidth: 0.045,
+  creaseLength: 0.75
 };
 
 // ============================================
@@ -95,7 +97,8 @@ function createBeanGeometry(params = {}) {
     scaleZ = 0.5,      // Thickness - chunkier
     grooveDepth = 0.2,
     grooveWidth = 0.25,
-    creaseWidth = 0.03
+    creaseWidth = CONFIG.creaseWidth,
+    creaseLength = CONFIG.creaseLength
   } = params;
 
   const vertices = [];
@@ -120,7 +123,10 @@ function createBeanGeometry(params = {}) {
 
       // Groove calculation - affects front side (positive Z)
       const grooveMask = smoothstep(grooveWidth, 0, Math.abs(u));
-      const creaseMask = smoothstep(creaseWidth * 2, 0, Math.abs(u));
+      // Crisp crease with 90deg square ends
+      const inCreaseWidth = Math.abs(u) < creaseWidth;
+      const inCreaseLength = Math.abs(v) < creaseLength;
+      const creaseMask = (inCreaseWidth && inCreaseLength) ? 1.0 : 0.0;
 
       // Apply groove - push inward on Z
       if (z > 0) {
@@ -296,6 +302,8 @@ function setupGUI() {
   beansFolder.add(CONFIG, 'beanCount', 10, 300, 1).name('Count').onFinishChange(resetBeans);
   beansFolder.add(CONFIG, 'scaleMin', 0.05, 0.3, 0.01).name('Scale Min').onFinishChange(resetBeans);
   beansFolder.add(CONFIG, 'scaleMax', 0.1, 0.6, 0.01).name('Scale Max').onFinishChange(resetBeans);
+  beansFolder.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.005).name('Crease Width').onFinishChange(resetBeans);
+  beansFolder.add(CONFIG, 'creaseLength', 0.3, 0.95, 0.05).name('Crease Length').onFinishChange(resetBeans);
 
   const moveFolder = gui.addFolder('Movement');
   moveFolder.add(CONFIG, 'driftSpeed', 0, 1, 0.01).name('Drift Speed').onFinishChange(updateVelocities);
@@ -326,6 +334,9 @@ function resetBeans() {
     scene.remove(bean);
   });
   beans = [];
+  // Regenerate geometry in case creaseWidth changed
+  beanGeometry.dispose();
+  beanGeometry = createBeanGeometry();
   createBeans();
 }
 
