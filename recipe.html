@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipe Baseline | Brewlingo</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Recipe-specific overrides - inherits from base header in styles.css */
+    header.recipe-header {
+      background-color: #8dfaff;
+      border-image-source: url('assets/header-frill-cyan.svg');
+    }
+
+    .back-link {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1rem;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      font-size: 1.25rem;
+      color: var(--black);
+      text-decoration: none;
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 8px;
+      z-index: 100;
+      transition: all 0.2s ease;
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+    }
+
+    @media (max-width: 768px) {
+      .back-link {
+        display: flex;
+      }
+    }
+
+    .back-link:hover {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    /* TL;DR Box */
+    .tldr-box {
+      background: var(--yellow);
+      border: 2px solid var(--black);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.25);
+    }
+
+    .tldr-title {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 1.5rem;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tldr-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .tldr-list li {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      padding: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+      border-bottom: 1px dashed rgba(0,0,0,0.2);
+    }
+
+    .tldr-list li:last-child {
+      border-bottom: none;
+    }
+
+    .tldr-list li::before {
+      content: '>';
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+    }
+
+    /* Section Headers */
+    .section-title {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 1.75rem;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      margin: 3rem 0 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 3px solid var(--black);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-title i {
+      font-size: 1.5rem;
+    }
+
+    /* Recipe Cards */
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      .recipe-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .recipe-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .recipe-card {
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.25);
+    }
+
+    .recipe-card-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid var(--black);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .recipe-card-header i {
+      font-size: 1rem;
+    }
+
+    .recipe-card-title {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+
+    .recipe-card-body {
+      padding: 1rem;
+    }
+
+    /* Parameters Row - chip style */
+    .params-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .param {
+      text-align: center;
+      padding: 0.35rem 0.25rem;
+      background: var(--white);
+      border: 2px solid var(--black);
+    }
+
+    .param-label {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.6;
+      margin-bottom: 0.15rem;
+    }
+
+    .param-value {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .recipe-card-desc {
+      font-size: 0.8rem;
+      line-height: 1.5;
+      opacity: 0.85;
+    }
+
+    /* Color coding for card headers */
+    .recipe-card[data-type="high"] .recipe-card-header { background: var(--red); }
+    .recipe-card[data-type="mid"] .recipe-card-header { background: var(--orange); }
+    .recipe-card[data-type="low"] .recipe-card-header { background: var(--green); }
+    .recipe-card[data-type="decaf"] .recipe-card-header { background: var(--purple); }
+    .recipe-card[data-type="washed"] .recipe-card-header { background: var(--cyan); }
+    .recipe-card[data-type="natural"] .recipe-card-header { background: var(--pink); }
+    .recipe-card[data-type="honey"] .recipe-card-header { background: var(--amber); }
+    .recipe-card[data-type="anaerobic"] .recipe-card-header { background: var(--indigo); }
+    .recipe-card[data-type="wethulled"] .recipe-card-header { background: var(--blue); }
+    .recipe-card[data-type="light"] .recipe-card-header { background: #fef9c3; }
+    .recipe-card[data-type="lightmed"] .recipe-card-header { background: #fde68a; }
+    .recipe-card[data-type="medium"] .recipe-card-header { background: var(--amber); }
+    .recipe-card[data-type="meddark"] .recipe-card-header { background: var(--orange); }
+    .recipe-card[data-type="dark"] .recipe-card-header { background: #78350f; color: var(--white); }
+    .recipe-card[data-type="dark"] .recipe-card-header i { color: var(--white); }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link" aria-label="Back to home">
+    <i class="fa-solid fa-arrow-left"></i>
+  </a>
+
+  <div class="marquee-banner">
+    <div class="marquee-content">
+      <span>Dial in your brew</span>
+      <span>Roast level drives everything</span>
+      <span>Temperature is key</span>
+      <span>Agitation matters</span>
+      <span>Find your baseline</span>
+      <span>Adjust from there</span>
+      <span>Dial in your brew</span>
+      <span>Roast level drives everything</span>
+      <span>Temperature is key</span>
+      <span>Agitation matters</span>
+      <span>Find your baseline</span>
+      <span>Adjust from there</span>
+    </div>
+  </div>
+
+  <header class="recipe-header">
+    <h1>
+      Recipe Baseline
+      <span>Coffee Dialing Cheat Sheet</span>
+    </h1>
+  </header>
+
+  <div class="container">
+
+    <!-- TL;DR -->
+    <div class="tldr-box">
+      <div class="tldr-title">
+        <i class="fa-solid fa-bolt"></i>
+        TL;DR
+      </div>
+      <ul class="tldr-list">
+        <li><strong>Roast level > everything else</strong> (it dictates temp, grind, agitation).</li>
+        <li><strong>Bean density (altitude)</strong> = temperature driver.</li>
+        <li><strong>Processing</strong> sets solubility (anaerobic/natural = lower temp).</li>
+        <li><strong>Agitation</strong> is the #1 cause of over-extraction in home pour-overs.</li>
+        <li><strong>Ratio</strong> is the least sensitive variable — 1:15–1:17 almost always works.</li>
+      </ul>
+    </div>
+
+    <!-- ALTITUDE / DENSITY -->
+    <h2 class="section-title">
+      <i class="fa-solid fa-mountain"></i>
+      Altitude / Density
+    </h2>
+
+    <div class="recipe-grid">
+      <div class="recipe-card" data-type="high">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-mountain-sun"></i>
+          <span class="recipe-card-title">High Altitude</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">94–96°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:17</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-fine</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Mod–High</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            >1,700m / high density. Denser beans need more energy to extract; higher temp and agitation help unlock acidity, florals, and complexity.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="mid">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-mountain"></i>
+          <span class="recipe-card-title">Mid Altitude</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">91–94°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:17</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Medium</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Moderate</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            1,200–1,700m / medium density. Balanced extraction potential. Typical of many Colombians and Centrals. Good balance between sweetness, clarity, and body.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="low">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-hill-rockslide"></i>
+          <span class="recipe-card-title">Low Altitude</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">88–91°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:18</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-coarse</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Gentle–Min</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            <1,200m / low density. More porous beans extract faster — use lower temps, coarser grind, and reduce agitation to avoid bitterness or flatness.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="decaf">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-moon"></i>
+          <span class="recipe-card-title">Decaf (any altitude)</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">88–92°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:18</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-coarse</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Very Min</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            Processed beans like decaf mimic low-altitude behavior — highly extractable, easily overdone. Lower heat and gentle technique.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROCESSING -->
+    <h2 class="section-title">
+      <i class="fa-solid fa-flask"></i>
+      Processing
+    </h2>
+
+    <div class="recipe-grid">
+      <div class="recipe-card" data-type="washed">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-droplet"></i>
+          <span class="recipe-card-title">Washed</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">93–96°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:17</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-fine</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Moderate</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            Clean, bright flavors; good clarity and acidity. High temp enhances origin characteristics.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="natural">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-sun"></i>
+          <span class="recipe-card-title">Natural</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">90–94°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:16–1:17</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Medium</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Gentle</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            Fruity and body-heavy. Easier to over-extract — use gentle agitation and slightly coarser grind.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="honey">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-jar"></i>
+          <span class="recipe-card-title">Honey / Pulped</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">91–94°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:18</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Medium</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Light</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            Sweetness from retained mucilage. Balanced extraction for both body and clarity.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="anaerobic">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-bacteria"></i>
+          <span class="recipe-card-title">Anaerobic / Fermented</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">88–92°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:18</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-coarse</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Very Min</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            Intense, often funky. Highly soluble — go low on temp and minimize turbulence.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="wethulled">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-water"></i>
+          <span class="recipe-card-title">Wet-Hulled</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">91–94°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:18</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-coarse</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Gentle</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            Earthy, complex body. Tends toward uneven extraction — use a forgiving grind and gentle pour.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="decaf">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-leaf"></i>
+          <span class="recipe-card-title">Decaf (SWP/EA)</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">88–92°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:18</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-coarse</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Minimal</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            More soluble due to cell structure changes. Easily over-extracted. Lower temp & coarser grind help retain sweetness and reduce bitterness.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROAST TYPE -->
+    <h2 class="section-title">
+      <i class="fa-solid fa-fire"></i>
+      Roast Type
+    </h2>
+
+    <div class="recipe-grid">
+      <div class="recipe-card" data-type="light">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-circle"></i>
+          <span class="recipe-card-title">Light Roast</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">94–97°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:17</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-fine</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Mod–Aggr</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            High density and low solubility. Needs higher temp and more agitation. Emphasizes acidity and origin clarity.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="lightmed">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-circle-half-stroke"></i>
+          <span class="recipe-card-title">Light-Medium</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">93–95°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:17</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Medium</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Moderate</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            Balanced extraction; acidity still present, but with more sweetness and body.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="medium">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-adjust"></i>
+          <span class="recipe-card-title">Medium Roast</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">91–94°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:17</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Medium</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Moderate</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            Sweet, rounded flavors. Lower temp helps preserve balance. Most versatile for manual brewing.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="meddark">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-circle"></i>
+          <span class="recipe-card-title">Medium-Dark</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">89–92°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:18</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-coarse</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Gentle</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            Solubility increases. Can over-extract easily. Slightly lower temp and agitation recommended.
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-card" data-type="dark">
+        <div class="recipe-card-header">
+          <i class="fa-solid fa-circle"></i>
+          <span class="recipe-card-title">Dark Roast</span>
+        </div>
+        <div class="recipe-card-body">
+          <div class="params-row">
+            <div class="param">
+              <div class="param-label">Temp</div>
+              <div class="param-value">87–90°C</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Ratio</div>
+              <div class="param-value">1:15–1:18</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Grind</div>
+              <div class="param-value">Med-coarse</div>
+            </div>
+            <div class="param">
+              <div class="param-label">Agitation</div>
+              <div class="param-value">Very Gen</div>
+            </div>
+          </div>
+          <div class="recipe-card-desc">
+            High solubility and fragility. Very easy to over-extract. Use lower temps, minimal agitation, and faster brews for balance.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div>Brewlingo</div>
+      <div>·</div>
+      <div>Recipe Baseline</div>
+    </footer>
+
+  </div>
+</body>
+</html>
