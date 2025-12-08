@@ -36,7 +36,11 @@ const CONFIG = {
   beanScaleY: 0.75,
   beanScaleZ: 0.5,
   // Animation state
-  paused: false
+  paused: false,
+  // Collision settings
+  collisionEnabled: true,
+  collisionDamping: 0.8,
+  collisionRadiusMultiplier: 0.5
 };
 
 // ============================================

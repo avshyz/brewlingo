@@ -13,44 +13,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
-  <style>
-    .back-link {
-      position: fixed;
-      bottom: 1.5rem;
-      left: 1rem;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      width: 48px;
-      height: 48px;
-      font-size: 1.25rem;
-      color: var(--black);
-      text-decoration: none;
-      background: var(--white);
-      border: 2px solid var(--black);
-      border-radius: 8px;
-      z-index: 100;
-      transition: all 0.2s ease;
-      box-shadow: 3px 3px 0 rgba(0,0,0,0.2);
-    }
-
-    @media (max-width: 768px) {
-      .back-link {
-        display: flex;
-      }
-    }
-
-    .back-link:hover {
-      background: var(--black);
-      color: var(--white);
-    }
-  </style>
 </head>
 <body>
-  <a href="index.html" class="back-link" aria-label="Back to home" onclick="event.preventDefault(); history.back()">
-    <i class="fa-solid fa-arrow-left"></i>
-  </a>
-
   <div class="marquee-banner">
     <div class="marquee-content">
       <span>Speak coffee fluently</span>
