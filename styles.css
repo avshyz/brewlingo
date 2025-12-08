@@ -9,9 +9,12 @@
   outline: none;
 }
 
-:focus-visible {
-  outline: 3px solid magenta;
-  outline-offset: 2px;
+/* Only show focus ring on devices with mouse/trackpad (not touch) */
+@media (hover: hover) and (pointer: fine) {
+  :focus-visible {
+    outline: 3px solid magenta;
+    outline-offset: 2px;
+  }
 }
 
 /* Safari fix: prevent icons/SVGs from triggering :focus-visible on tap */
@@ -191,6 +194,13 @@ header {
 
 /* CARDS */
 .card {
+  /* Button reset - semantic <button> for proper focus-visible heuristics */
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+  /* Card styles */
   background: var(--white);
   border: var(--card-border) solid var(--black);
   border-radius: 0.75rem;
@@ -204,9 +214,12 @@ header {
   display: flex;
   flex-direction: column;
 
-  &:focus-visible {
-    outline: 3px solid magenta;
-    outline-offset: 4px;
+  /* Only show focus ring for keyboard navigation on non-touch devices */
+  @media (hover: hover) and (pointer: fine) {
+    &:focus-visible {
+      outline: 3px solid magenta;
+      outline-offset: 4px;
+    }
   }
 
   & .card-title,
@@ -508,6 +521,11 @@ dialog {
 }
 
 .dialog-close {
+  /* Button reset */
+  appearance: none;
+  font: inherit;
+  color: var(--black);
+  /* Button styles */
   width: 28px;
   height: 28px;
   border: var(--border);
@@ -520,7 +538,7 @@ dialog {
   font-size: 1.2rem;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
   transform: rotate(45deg);
 
   &:hover {

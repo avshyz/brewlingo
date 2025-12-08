@@ -164,8 +164,6 @@ dialog.addEventListener('cancel', (e) => {
 
 // Card click handlers
 document.querySelectorAll('.card').forEach(card => {
-  card.setAttribute('tabindex', '0');
-
   card.addEventListener('click', () => openDialog(card));
 
   card.addEventListener('keydown', (e) => {
