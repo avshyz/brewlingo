@@ -55,13 +55,12 @@
       }
     }
 
-    /* Main card container - matches Q&A / TL;DR style */
+    /* Main card container */
     .landing-card {
-      background: floralwhite;
-      border: 2px solid var(--black);
-      border-radius: 0.75rem;
-      box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.25);
-      max-width: 700px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      max-width: 720px;
       width: 100%;
       padding: 2.5rem;
     }
@@ -69,9 +68,6 @@
     @media (max-width: 640px) {
       .landing-card {
         padding: 1rem;
-        background: transparent;
-        border: none;
-        box-shadow: none;
         position: relative;
         bottom: 60px;
       }
@@ -104,6 +100,16 @@
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
+      position: relative;
+    }
+
+    .landing-hero h1::before {
+      content: "Brewlingo";
+      position: absolute;
+      inset: 0;
+      -webkit-text-stroke: 1px white;
+      color: transparent;
+      z-index: -1;
     }
 
     .landing-hero .tagline {
@@ -124,18 +130,11 @@
       .landing-hero h1 {
         font-size: 12vw;
         padding-bottom: 2rem;
-        position: relative;
       }
 
       .landing-hero h1::before {
-        content: "Brewlingo";
-        position: absolute;
-        inset: 0;
         -webkit-text-stroke: 2px white;
-        color: transparent;
-        z-index: -1;
       }
-
     }
 
     @keyframes gradient-flow {
@@ -274,8 +273,6 @@
 
       <!-- Feature cards section -->
       <section class="landing-features">
-        <h2 class="features-subtitle">What can I do for you?</h2>
-
         <div class="feature-cards">
           <a href="language.html" class="feature-card">
             <div class="feature-card-header">
