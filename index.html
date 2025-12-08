@@ -11,23 +11,58 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
   <style>
-    .landing-container {
+    /* Particle canvas - full viewport behind content */
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Page wrapper */
+    .landing-page {
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 2rem;
     }
 
-    .landing-header {
-      text-align: center;
-      margin-bottom: 4rem;
+    @media (max-width: 640px) {
+      .landing-page {
+        padding: 0.7rem;
+      }
     }
 
-    .landing-header h1 {
+    /* Main card container - matches Q&A / TL;DR style */
+    .landing-card {
+      background: floralwhite;
+      border: 2px solid var(--black);
+      border-radius: 0.75rem;
+      box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.25);
+      max-width: 700px;
+      width: 100%;
+      padding: 2.5rem;
+    }
+
+    @media (max-width: 640px) {
+      .landing-card {
+        padding: 1.5rem;
+      }
+    }
+
+    /* Hero section */
+    .landing-hero {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .landing-hero h1 {
       font-family: 'Archivo Black', sans-serif;
-      font-size: clamp(3rem, 10vw, 6rem);
+      font-size: clamp(2.5rem, 10vw, 5rem);
       margin: 0;
       letter-spacing: -0.02em;
       text-transform: uppercase;
@@ -48,82 +83,137 @@
       color: transparent;
     }
 
-    .landing-header span {
-      display: block;
+    .landing-hero .tagline {
       font-family: 'Space Mono', monospace;
-      font-size: clamp(0.875rem, 2vw, 1.125rem);
-      color: var(--muted);
+      font-size: 1rem;
       text-transform: uppercase;
       letter-spacing: 0.2em;
+      color: rgba(26, 26, 26, 0.6);
       margin-top: 0.5rem;
     }
 
-    .landing-links {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      width: 100%;
-      max-width: 400px;
+    @keyframes gradient-flow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
     }
 
-    .landing-link {
+    /* Features section */
+    .landing-features {
+      text-align: center;
+    }
+
+    .features-subtitle {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.9rem;
+      color: rgba(26, 26, 26, 0.5);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Feature cards grid */
+    .feature-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 640px) {
+      .feature-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Individual feature card - with CMYK hover effect */
+    .feature-card {
+      background: var(--white);
+      border: 2px solid var(--black);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: var(--black);
+      text-align: left;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 2px 2px 0 var(--black);
+    }
+
+    .feature-card:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 5px 5px 0 var(--black);
+    }
+
+    /* Feature card header - icon inline with title */
+    .feature-card-header {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding: 1.5rem 2rem;
-      background: var(--card-bg);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      text-decoration: none;
-      color: var(--text);
-      font-family: 'Space Mono', monospace;
-      font-size: 1.125rem;
-      font-weight: 700;
-      transition: all 0.2s ease;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      min-height: 2lh;
     }
 
-    .landing-link:hover {
-      border-color: var(--accent);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    .feature-card-header i {
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      text-shadow: 0 0 0 cyan, 0 0 0 magenta;
+      transition: text-shadow 0.2s ease;
     }
 
-    .landing-link i {
-      font-size: 1.5rem;
-      color: var(--accent);
+    .feature-card:hover .feature-card-header i {
+      text-shadow: -1.5px -1.5px 0 cyan, 3px 3px 0 magenta;
     }
 
-    .landing-link .arrow {
-      margin-left: auto;
-      color: var(--muted);
-      transition: transform 0.2s ease;
+    .feature-card h3 {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      margin: 0;
+      letter-spacing: -0.5px;
+      text-shadow: 0 0 0 cyan, 0 0 0 magenta;
+      transition: text-shadow 0.2s ease;
     }
 
-    .landing-link:hover .arrow {
-      transform: translateX(4px);
-      color: var(--accent);
+    .feature-card:hover h3 {
+      text-shadow: -1.5px -1.5px 0 cyan, 3px 3px 0 magenta;
+    }
+
+    .feature-card p {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      opacity: 0.7;
+      margin: 0;
     }
   </style>
 </head>
 <body>
-  <div class="landing-container">
-    <div class="landing-header">
-      <h1>Brewlingo</h1>
-      <span>Barista Reference</span>
-    </div>
+  <div class="landing-page">
+    <div class="landing-card">
+      <!-- Hero section -->
+      <section class="landing-hero">
+        <h1>Brewlingo</h1>
+        <p class="tagline">Barista Reference</p>
+      </section>
 
-    <nav class="landing-links">
-      <a href="language.html" class="landing-link">
-        <i class="fa-solid fa-language"></i>
-        Coffee Language
-        <i class="fa-solid fa-arrow-right arrow"></i>
-      </a>
-      <a href="recipe.html" class="landing-link">
-        <i class="fa-solid fa-flask"></i>
-        Recipe Baseline
-        <i class="fa-solid fa-arrow-right arrow"></i>
-      </a>
-    </nav>
+      <!-- Feature cards section -->
+      <section class="landing-features">
+        <h2 class="features-subtitle">What can I do for you?</h2>
+
+        <div class="feature-cards">
+          <a href="language.html" class="feature-card">
+            <div class="feature-card-header">
+              <i class="fa-solid fa-language"></i>
+              <h3>Coffee Language</h3>
+            </div>
+            <p>Your guide to understanding coffee terminology and brewing concepts.</p>
+          </a>
+
+          <a href="recipe.html" class="feature-card">
+            <div class="feature-card-header">
+              <i class="fa-solid fa-flask"></i>
+              <h3>Pourover Baseline</h3>
+            </div>
+            <p>Master the fundamentals of crafting the perfect pourover recipe.</p>
+          </a>
+        </div>
+      </section>
+    </div>
   </div>
 </body>
 </html>
