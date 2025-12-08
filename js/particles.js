@@ -264,14 +264,16 @@ function init() {
     antialias: true
   });
   const pixelRatio = Math.min(window.devicePixelRatio, 3);
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  renderer.setSize(width, height);
   renderer.setPixelRatio(pixelRatio);
   renderer.setClearColor(0x000000, 0);
 
   // Post-processing for CMYK halo effect
   const renderTarget = new THREE.WebGLRenderTarget(
-    window.innerWidth * pixelRatio,
-    window.innerHeight * pixelRatio,
+    width * pixelRatio,
+    height * pixelRatio,
     { format: THREE.RGBAFormat, stencilBuffer: false }
   );
 
@@ -485,12 +487,15 @@ function animate() {
 // RESIZE
 // ============================================
 function handleResize() {
+  const canvas = document.getElementById('particle-canvas');
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
   const pixelRatio = Math.min(window.devicePixelRatio, 3);
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(width, height);
   renderer.setPixelRatio(pixelRatio);
-  composer.setSize(window.innerWidth * pixelRatio, window.innerHeight * pixelRatio);
+  composer.setSize(width * pixelRatio, height * pixelRatio);
 }
 
 // ============================================

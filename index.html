@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="view-transition" content="same-origin">
   <script src="js/page-transitions.js"></script>
   <title>Brewlingo</title>
@@ -14,13 +14,28 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
   <style>
+    html, body {
+      overscroll-behavior: none;
+      overflow: hidden;
+      height: 100%;
+      height: 100lvh;
+    }
+
+    html {
+      background-color: var(--white);
+      background-image: radial-gradient(circle, var(--black) 1px, transparent 1px);
+      background-size: 20px 20px;
+      background-attachment: fixed;
+    }
+
     /* Particle canvas - full viewport behind content */
     #particle-canvas {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: calc(100vh + env(safe-area-inset-bottom, 0px));
+      height: calc(100lvh + env(safe-area-inset-bottom, 0px));
       z-index: -1;
       pointer-events: none;
     }
@@ -108,7 +123,7 @@
     @media (max-width: 640px) {
       .landing-hero h1 {
         font-size: 12vw;
-        padding-bottom: 4rem;
+        padding-bottom: 2rem;
         position: relative;
       }
 
