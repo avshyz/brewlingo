@@ -211,8 +211,16 @@ header {
   box-shadow: var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black);
   user-select: none;
   -webkit-touch-callout: none;
+  -webkit-user-select: none;
   display: flex;
   flex-direction: column;
+
+  /* Prevent text selection on all children (long-press on mobile) */
+  & * {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
 
   /* Only show focus ring for keyboard navigation on non-touch devices */
   @media (hover: hover) and (pointer: fine) {
