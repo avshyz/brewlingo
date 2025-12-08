@@ -36,7 +36,7 @@
 
     @media (max-width: 640px) {
       .landing-page {
-        padding: 0.7rem;
+        padding: 0.5rem;
       }
     }
 
@@ -53,20 +53,25 @@
 
     @media (max-width: 640px) {
       .landing-card {
-        padding: 1.5rem;
+        padding: 1rem;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        position: relative;
+        bottom: 60px;
       }
     }
 
     /* Hero section */
     .landing-hero {
       text-align: center;
-      margin-bottom: 3rem;
     }
 
     .landing-hero h1 {
       font-family: 'Archivo Black', sans-serif;
       font-size: clamp(2.5rem, 10vw, 5rem);
       margin: 0;
+      padding-bottom: 4rem;
       letter-spacing: -0.02em;
       text-transform: uppercase;
       background: linear-gradient(
@@ -92,7 +97,30 @@
       text-transform: uppercase;
       letter-spacing: 0.2em;
       color: rgba(26, 26, 26, 0.6);
-      margin-top: 0.5rem;
+      margin-bottom: 4rem;
+      text-shadow:
+        -1px -1px 0 white,
+         1px -1px 0 white,
+        -1px  1px 0 white,
+         1px  1px 0 white;
+    }
+
+    @media (max-width: 640px) {
+      .landing-hero h1 {
+        font-size: 12vw;
+        padding-bottom: 4rem;
+        position: relative;
+      }
+
+      .landing-hero h1::before {
+        content: "Brewlingo";
+        position: absolute;
+        inset: 0;
+        -webkit-text-stroke: 2px white;
+        color: transparent;
+        z-index: -1;
+      }
+
     }
 
     @keyframes gradient-flow {
@@ -112,6 +140,12 @@
       margin-bottom: 1.5rem;
     }
 
+    @media (max-width: 640px) {
+      .features-subtitle {
+        display: none;
+      }
+    }
+
     /* Feature cards grid */
     .feature-cards {
       display: grid;
@@ -122,6 +156,7 @@
     @media (max-width: 640px) {
       .feature-cards {
         grid-template-columns: 1fr;
+        gap: 0.75rem;
       }
     }
 
@@ -138,6 +173,12 @@
       box-shadow: 2px 2px 0 var(--black);
     }
 
+    @media (max-width: 640px) {
+      .feature-card {
+        padding: 0.875rem;
+      }
+    }
+
     .feature-card:hover {
       transform: translate(-3px, -3px);
       box-shadow: 5px 5px 0 var(--black);
@@ -150,6 +191,14 @@
       gap: 0.75rem;
       margin-bottom: 0.75rem;
       min-height: 2lh;
+    }
+
+    @media (max-width: 640px) {
+      .feature-card-header {
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        min-height: auto;
+      }
     }
 
     .feature-card-header i {
@@ -173,6 +222,12 @@
       transition: text-shadow 0.2s ease;
     }
 
+    @media (max-width: 640px) {
+      .feature-card h3 {
+        font-size: 1rem;
+      }
+    }
+
     .feature-card:hover h3 {
       text-shadow: -1.5px -1.5px 0 cyan, 3px 3px 0 magenta;
     }
@@ -183,6 +238,13 @@
       opacity: 0.7;
       margin: 0;
     }
+
+    @media (max-width: 640px) {
+      .feature-card p {
+        font-size: 0.75rem;
+        line-height: 1.4;
+      }
+    }
   </style>
 </head>
 <body>
@@ -192,7 +254,7 @@
       <!-- Hero section -->
       <section class="landing-hero">
         <h1>Brewlingo</h1>
-        <p class="tagline">Barista Reference</p>
+        <p class="tagline">Barista's Reference</p>
       </section>
 
       <!-- Feature cards section -->

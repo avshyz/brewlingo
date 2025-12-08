@@ -15,7 +15,7 @@ const isMobile = window.innerWidth <= 640;
 const isDebug = new URLSearchParams(window.location.search).get('d') === '1';
 
 const CONFIG = {
-  beanCount: isMobile ? 140 : 200,
+  beanCount: isMobile ? 180 : 200,
   driftSpeed: 0.5,
   rotationSpeed: 3,
   scaleMin: 0.05,
@@ -263,14 +263,15 @@ function init() {
     alpha: true,
     antialias: true
   });
+  const pixelRatio = Math.min(window.devicePixelRatio, 3);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(pixelRatio);
   renderer.setClearColor(0x000000, 0);
 
   // Post-processing for CMYK halo effect
   const renderTarget = new THREE.WebGLRenderTarget(
-    window.innerWidth,
-    window.innerHeight,
+    window.innerWidth * pixelRatio,
+    window.innerHeight * pixelRatio,
     { format: THREE.RGBAFormat, stencilBuffer: false }
   );
 
@@ -484,10 +485,12 @@ function animate() {
 // RESIZE
 // ============================================
 function handleResize() {
+  const pixelRatio = Math.min(window.devicePixelRatio, 3);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  composer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(pixelRatio);
+  composer.setSize(window.innerWidth * pixelRatio, window.innerHeight * pixelRatio);
 }
 
 // ============================================
