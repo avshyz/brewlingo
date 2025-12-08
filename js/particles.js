@@ -15,7 +15,7 @@ const isMobile = window.innerWidth <= 640;
 const isDebug = new URLSearchParams(window.location.search).get('d') === '1';
 
 const CONFIG = {
-  beanCount: isMobile ? 100 : 200,
+  beanCount: isMobile ? 140 : 200,
   driftSpeed: 0.5,
   rotationSpeed: 3,
   scaleMin: 0.05,
@@ -26,10 +26,17 @@ const CONFIG = {
   spreadY: 8,
   staggerDelay: 10,
   animationDuration: 700,
-  overshoot: 2,
+  elasticAmplitude: 1,
+  elasticPeriod: 0.3,
   cmykOffset: 0.004,
   creaseWidth: 0.035,
-  creaseLength: 0.7
+  creaseLength: 0.7,
+  // Bean shape
+  beanScaleX: 0.6,
+  beanScaleY: 0.75,
+  beanScaleZ: 0.5,
+  // Animation state
+  paused: false
 };
 
 // ============================================
@@ -91,10 +98,10 @@ function createBeanGeometry(params = {}) {
   const {
     segmentsU = 48,
     segmentsV = 32,
-    // STUBBY proportions - width > length
-    scaleX = 0.6,      // Width (across groove) - wider
-    scaleY = 0.75,     // Length (along bean) - shorter for stubby look
-    scaleZ = 0.5,      // Thickness - chunkier
+    // Bean proportions from CONFIG
+    scaleX = CONFIG.beanScaleX,
+    scaleY = CONFIG.beanScaleY,
+    scaleZ = CONFIG.beanScaleZ,
     grooveDepth = 0.2,
     grooveWidth = 0.25,
     creaseWidth = CONFIG.creaseWidth,
@@ -304,9 +311,11 @@ function debouncedReset() {
 }
 
 function setupGUI() {
-  gui = new GUI({ title: 'Bean Controls' });
+  gui = new GUI({ title: 'Debug UI' });
+  gui.close();
 
   const beansFolder = gui.addFolder('Beans');
+  beansFolder.close();
   beansFolder.add(CONFIG, 'beanCount', 10, 300, 1).name('Count').onFinishChange(resetBeans);
   beansFolder.add(CONFIG, 'scaleMin', 0.05, 0.3, 0.01).name('Scale Min').onFinishChange(resetBeans);
   beansFolder.add(CONFIG, 'scaleMax', 0.1, 0.6, 0.01).name('Scale Max').onFinishChange(resetBeans);
@@ -317,25 +326,37 @@ function setupGUI() {
     beanMaterial.uniforms.creaseLength.value = v;
   });
 
+  const shapeFolder = gui.addFolder('Bean Shape');
+  shapeFolder.close();
+  shapeFolder.add(CONFIG, 'beanScaleX', 0.3, 1, 0.05).name('Width').onFinishChange(rebuildGeometry);
+  shapeFolder.add(CONFIG, 'beanScaleY', 0.3, 1, 0.05).name('Length').onFinishChange(rebuildGeometry);
+  shapeFolder.add(CONFIG, 'beanScaleZ', 0.3, 1, 0.05).name('Thickness').onFinishChange(rebuildGeometry);
+
   const moveFolder = gui.addFolder('Movement');
+  moveFolder.close();
   moveFolder.add(CONFIG, 'driftSpeed', 0, 1, 0.01).name('Drift Speed').onFinishChange(updateVelocities);
   moveFolder.add(CONFIG, 'rotationSpeed', 0, 5, 0.1).name('Spin Speed').onFinishChange(updateVelocities);
+  moveFolder.add(CONFIG, 'paused').name('⏸ Pause');
 
   const spreadFolder = gui.addFolder('Spread');
+  spreadFolder.close();
   spreadFolder.add(CONFIG, 'spreadX', 5, 25, 1).name('Spread X').onFinishChange(resetBeans);
   spreadFolder.add(CONFIG, 'spreadY', 3, 15, 1).name('Spread Y').onFinishChange(resetBeans);
   spreadFolder.add(CONFIG, 'depthMin', -10, 0, 0.5).name('Depth Min').onFinishChange(resetBeans);
   spreadFolder.add(CONFIG, 'depthMax', 0, 10, 0.5).name('Depth Max').onFinishChange(resetBeans);
 
   const cmykFolder = gui.addFolder('CMYK Halo');
+  cmykFolder.close();
   cmykFolder.add(CONFIG, 'cmykOffset', 0.001, 0.015, 0.0005).name('Offset').onChange(v => {
     cmykPass.uniforms.offset.value = v;
   });
 
   const animFolder = gui.addFolder('Animation');
+  animFolder.close();
   animFolder.add(CONFIG, 'staggerDelay', 5, 50, 1).name('Stagger (ms)').onFinishChange(debouncedReset);
-  animFolder.add(CONFIG, 'animationDuration', 200, 1000, 50).name('Duration (ms)').onFinishChange(debouncedReset);
-  animFolder.add(CONFIG, 'overshoot', 1, 2, 0.05).name('Overshoot').onFinishChange(debouncedReset);
+  animFolder.add(CONFIG, 'animationDuration', 200, 2000, 50).name('Duration (ms)').onFinishChange(debouncedReset);
+  animFolder.add(CONFIG, 'elasticAmplitude', 0.5, 3, 0.1).name('Amplitude').onFinishChange(debouncedReset);
+  animFolder.add(CONFIG, 'elasticPeriod', 0.1, 1, 0.05).name('Period').onFinishChange(debouncedReset);
 
   gui.add({ reset: resetBeans }, 'reset').name('🔄 Reset & Replay');
 }
@@ -347,6 +368,15 @@ function resetBeans() {
   });
   beans = [];
   createBeans();
+}
+
+function rebuildGeometry() {
+  // Rebuild geometry with new shape params, update all beans
+  beanGeometry.dispose();
+  beanGeometry = createBeanGeometry();
+  beans.forEach(bean => {
+    bean.geometry = beanGeometry;
+  });
 }
 
 function updateVelocities() {
@@ -413,7 +443,7 @@ function revealBeansStaggered() {
       z: bean.userData.targetScale,
       duration,
       delay,
-      ease: `elastic.out(1, ${0.3 / (CONFIG.overshoot - 1 + 0.01)})`
+      ease: `elastic.out(${CONFIG.elasticAmplitude}, ${CONFIG.elasticPeriod})`
     });
   });
 }
@@ -424,26 +454,28 @@ function revealBeansStaggered() {
 function animate() {
   requestAnimationFrame(animate);
 
-  beans.forEach(bean => {
-    const { vx, vy, vrx, vry, vrz } = bean.userData;
+  if (!CONFIG.paused) {
+    beans.forEach(bean => {
+      const { vx, vy, vrx, vry, vrz } = bean.userData;
 
-    if (bean.scale.x > 0) {
-      bean.position.x += vx;
-      bean.position.y += vy;
+      if (bean.scale.x > 0) {
+        bean.position.x += vx;
+        bean.position.y += vy;
 
-      bean.rotation.x += vrx;
-      bean.rotation.y += vry;
-      bean.rotation.z += vrz;
+        bean.rotation.x += vrx;
+        bean.rotation.y += vry;
+        bean.rotation.z += vrz;
 
-      const boundX = CONFIG.spreadX + 2;
-      const boundY = CONFIG.spreadY + 2;
+        const boundX = CONFIG.spreadX + 2;
+        const boundY = CONFIG.spreadY + 2;
 
-      if (bean.position.x > boundX) bean.position.x = -boundX;
-      if (bean.position.x < -boundX) bean.position.x = boundX;
-      if (bean.position.y > boundY) bean.position.y = -boundY;
-      if (bean.position.y < -boundY) bean.position.y = boundY;
-    }
-  });
+        if (bean.position.x > boundX) bean.position.x = -boundX;
+        if (bean.position.x < -boundX) bean.position.x = boundX;
+        if (bean.position.y > boundY) bean.position.y = -boundY;
+        if (bean.position.y < -boundY) bean.position.y = boundY;
+      }
+    });
+  }
 
   composer.render();
 }
