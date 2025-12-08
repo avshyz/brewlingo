@@ -57,25 +57,36 @@ function init() {
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.2;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  // Lighting - brighter and more dynamic
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+  // Ambient light - overall brightness
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   scene.add(ambientLight);
 
-  // Main light from front-right
-  const mainLight = new THREE.DirectionalLight(0xffffff, 2.0);
-  mainLight.position.set(5, 5, 10);
-  scene.add(mainLight);
+  // Hemisphere light - natural sky/ground
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0xb97a56, 0.6);
+  scene.add(hemiLight);
+
+  // Key light from front - casts shadows
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  keyLight.position.set(5, 8, 10);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.width = 1024;
+  keyLight.shadow.mapSize.height = 1024;
+  keyLight.shadow.camera.near = 0.5;
+  keyLight.shadow.camera.far = 50;
+  keyLight.shadow.camera.left = -15;
+  keyLight.shadow.camera.right = 15;
+  keyLight.shadow.camera.top = 15;
+  keyLight.shadow.camera.bottom = -15;
+  keyLight.shadow.bias = -0.001;
+  scene.add(keyLight);
 
   // Fill light from left
-  const fillLight = new THREE.DirectionalLight(0xffffff, 1.0);
-  fillLight.position.set(-5, 0, 5);
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+  fillLight.position.set(-4, 2, 3);
   scene.add(fillLight);
-
-  // Rim light from behind
-  const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  rimLight.position.set(0, 5, -10);
-  scene.add(rimLight);
 
   // Load model
   loadBeanModel();
@@ -108,7 +119,7 @@ function loadBeanModel() {
         function(gltf) {
           beanModel = gltf.scene;
 
-          // Apply the diffuse texture to all meshes
+          // Apply the diffuse texture to all meshes and enable shadows
           beanModel.traverse((child) => {
             if (child.isMesh) {
               child.material = new THREE.MeshStandardMaterial({
@@ -116,6 +127,8 @@ function loadBeanModel() {
                 roughness: 0.7,
                 metalness: 0.1
               });
+              child.castShadow = true;
+              child.receiveShadow = true;
             }
           });
 
