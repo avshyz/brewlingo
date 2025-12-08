@@ -28,8 +28,8 @@ const CONFIG = {
   animationDuration: 700,
   overshoot: 2,
   cmykOffset: 0.004,
-  creaseWidth: 0.045,
-  creaseLength: 0.75
+  creaseWidth: 0.035,
+  creaseLength: 0.7
 };
 
 // ============================================
@@ -103,7 +103,7 @@ function createBeanGeometry(params = {}) {
 
   const vertices = [];
   const indices = [];
-  const creaseAttr = [];
+  const uvParams = [];  // Store raw u,v for shader-based crease calculation
 
   // Generate vertices on parametric surface
   for (let iv = 0; iv <= segmentsV; iv++) {
@@ -123,10 +123,6 @@ function createBeanGeometry(params = {}) {
 
       // Groove calculation - affects front side (positive Z)
       const grooveMask = smoothstep(grooveWidth, 0, Math.abs(u));
-      // Crisp crease with 90deg square ends
-      const inCreaseWidth = Math.abs(u) < creaseWidth;
-      const inCreaseLength = Math.abs(v) < creaseLength;
-      const creaseMask = (inCreaseWidth && inCreaseLength) ? 1.0 : 0.0;
 
       // Apply groove - push inward on Z
       if (z > 0) {
@@ -145,7 +141,7 @@ function createBeanGeometry(params = {}) {
       z *= taper;
 
       vertices.push(x, y, z);
-      creaseAttr.push(creaseMask);
+      uvParams.push(u, v);  // Store raw parametric coords
     }
   }
 
@@ -164,7 +160,7 @@ function createBeanGeometry(params = {}) {
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setAttribute('aCrease', new THREE.Float32BufferAttribute(creaseAttr, 1));
+  geometry.setAttribute('aUvParams', new THREE.Float32BufferAttribute(uvParams, 2));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
 
@@ -180,28 +176,39 @@ function smoothstep(edge0, edge1, x) {
 // CEL-SHADED BEAN MATERIAL (black + white crease)
 // ============================================
 const BeanShader = {
-  uniforms: {},
+  uniforms: {
+    creaseWidth: { value: CONFIG.creaseWidth },
+    creaseLength: { value: CONFIG.creaseLength }
+  },
   vertexShader: `
-    attribute float aCrease;
+    attribute vec2 aUvParams;
     varying vec3 vPosition;
-    varying float vCrease;
+    varying vec2 vUvParams;
 
     void main() {
       vPosition = position;
-      vCrease = aCrease;
+      vUvParams = aUvParams;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
   fragmentShader: `
+    uniform float creaseWidth;
+    uniform float creaseLength;
     varying vec3 vPosition;
-    varying float vCrease;
+    varying vec2 vUvParams;
 
     void main() {
       // Pure black base
       vec3 color = vec3(0.0);
 
-      // Crisp white crease line - hard threshold
-      float creaseLine = step(0.7, vCrease);
+      // Calculate crease from parametric coords
+      float u = vUvParams.x;
+      float v = vUvParams.y;
+
+      // Crisp crease with 90deg square ends
+      float inWidth = step(abs(u), creaseWidth);
+      float inLength = step(abs(v), creaseLength);
+      float creaseLine = inWidth * inLength;
 
       // Only show crease on front face (positive Z)
       creaseLine *= step(0.0, vPosition.z);
@@ -270,6 +277,7 @@ function init() {
   // Create geometry and material
   beanGeometry = createBeanGeometry();
   beanMaterial = new THREE.ShaderMaterial({
+    uniforms: BeanShader.uniforms,
     vertexShader: BeanShader.vertexShader,
     fragmentShader: BeanShader.fragmentShader,
     side: THREE.DoubleSide
@@ -302,8 +310,12 @@ function setupGUI() {
   beansFolder.add(CONFIG, 'beanCount', 10, 300, 1).name('Count').onFinishChange(resetBeans);
   beansFolder.add(CONFIG, 'scaleMin', 0.05, 0.3, 0.01).name('Scale Min').onFinishChange(resetBeans);
   beansFolder.add(CONFIG, 'scaleMax', 0.1, 0.6, 0.01).name('Scale Max').onFinishChange(resetBeans);
-  beansFolder.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.005).name('Crease Width').onFinishChange(resetBeans);
-  beansFolder.add(CONFIG, 'creaseLength', 0.3, 0.95, 0.05).name('Crease Length').onFinishChange(resetBeans);
+  beansFolder.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.001).name('Crease Width').onChange(v => {
+    beanMaterial.uniforms.creaseWidth.value = v;
+  });
+  beansFolder.add(CONFIG, 'creaseLength', 0.3, 0.95, 0.01).name('Crease Length').onChange(v => {
+    beanMaterial.uniforms.creaseLength.value = v;
+  });
 
   const moveFolder = gui.addFolder('Movement');
   moveFolder.add(CONFIG, 'driftSpeed', 0, 1, 0.01).name('Drift Speed').onFinishChange(updateVelocities);
@@ -334,9 +346,6 @@ function resetBeans() {
     scene.remove(bean);
   });
   beans = [];
-  // Regenerate geometry in case creaseWidth changed
-  beanGeometry.dispose();
-  beanGeometry = createBeanGeometry();
   createBeans();
 }
 
