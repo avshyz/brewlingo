@@ -1,11 +1,65 @@
 /**
  * Floating 3D Coffee Beans
  * Three.js implementation for Brewlingo landing page
+ * Uses procedural geometry - no external models needed
  */
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import GUI from 'lil-gui';
+
+// ============================================
+// CMYK SHADER
+// ============================================
+const CMYKShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    offset: { value: 0.004 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float offset;
+    varying vec2 vUv;
+
+    void main() {
+      // Original center sample
+      vec4 center = texture2D(tDiffuse, vUv);
+
+      // Offset samples for color fringing
+      vec4 cr = texture2D(tDiffuse, vUv + vec2(offset, offset * 0.5));
+      vec4 cm = texture2D(tDiffuse, vUv + vec2(-offset * 0.5, offset));
+      vec4 cy = texture2D(tDiffuse, vUv + vec2(-offset, -offset * 0.5));
+
+      // Create color fringes only where there's alpha difference (edges)
+      float cyanEdge = max(0.0, cr.a - center.a);
+      float magentaEdge = max(0.0, cm.a - center.a);
+      float yellowEdge = max(0.0, cy.a - center.a);
+
+      // CMYK colors
+      vec3 cyan = vec3(0.0, 1.0, 1.0);
+      vec3 magenta = vec3(1.0, 0.0, 1.0);
+      vec3 yellow = vec3(1.0, 1.0, 0.0);
+
+      // Combine: original bean + colored fringes around edges
+      vec3 fringes = cyan * cyanEdge + magenta * magentaEdge + yellow * yellowEdge;
+      float fringeAlpha = max(max(cyanEdge, magentaEdge), yellowEdge);
+
+      // Final color: bean on top, fringes behind
+      vec3 finalColor = mix(fringes, center.rgb, center.a);
+      float finalAlpha = max(center.a, fringeAlpha * 0.8);
+
+      gl_FragColor = vec4(finalColor, finalAlpha);
+    }
+  `
+};
 
 // ============================================
 // CONFIGURATION
@@ -15,29 +69,118 @@ const isMobile = window.innerWidth <= 640;
 const isDebug = new URLSearchParams(window.location.search).get('d') === '1';
 
 const CONFIG = {
-  beanCount: isMobile ? 90 : 121,
-  driftSpeed: 0.36,
-  rotationSpeed: 2,
-  scaleMin: 0.08,
-  scaleMax: 0.21,
+  beanCount: isMobile ? 100 : 200,
+  driftSpeed: 0.5,
+  rotationSpeed: 3,
+  scaleMin: 0.16,
+  scaleMax: 0.4,
   depthMin: -5,
   depthMax: 2,
   spreadX: 12,
   spreadY: 8,
   staggerDelay: 11,
   animationDuration: 500,
-  overshoot: 1.35,
-  modelPath: 'assets/coffee_bean/scene.gltf'
+  overshoot: 1.5
+};
+
+// ============================================
+// PROCEDURAL COFFEE BEAN SHADER (Cell-shaded)
+// ============================================
+const CoffeeBeanShader = {
+  uniforms: {},
+  vertexShader: `
+    varying vec3 vPosition;
+
+    void main() {
+      vPosition = position;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vPosition;
+
+    void main() {
+      vec3 pos = vPosition;
+
+      // Crisp white crease line using step function (no smoothing)
+      // Line is at x ≈ 0.02-0.08 range, only on +X side
+      float lineWidth = 0.03;
+      float lineCenter = 0.05;
+      float inLineX = step(lineCenter - lineWidth, pos.x) * step(pos.x, lineCenter + lineWidth);
+
+      // Line runs most of the bean length, hard cutoff at ends
+      float inLineY = step(-0.7, pos.y) * step(pos.y, 0.7);
+
+      // Only show on the front face (+Z side) of the crease
+      float inLineZ = step(0.0, pos.z);
+
+      float creaseLine = inLineX * inLineY * inLineZ;
+
+      // Flat black bean, white line
+      vec3 black = vec3(0.0, 0.0, 0.0);
+      vec3 white = vec3(1.0, 1.0, 1.0);
+
+      vec3 color = mix(black, white, creaseLine);
+
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `
 };
 
 // ============================================
 // GLOBALS
 // ============================================
-let scene, camera, renderer;
+let scene, camera, renderer, composer;
 let beans = [];
-let beanModel = null;
+let beanGeometry = null;
+let beanMaterial = null;
 let gui = null;
-let diffuseTexture = null;
+
+// ============================================
+// PROCEDURAL BEAN GEOMETRY
+// ============================================
+function createBeanGeometry() {
+  // Create a coffee bean shape using a modified sphere
+  // Bean is like an ellipsoid with a crease/groove down one side
+  const widthSegments = 32;
+  const heightSegments = 24;
+
+  const geometry = new THREE.SphereGeometry(1, widthSegments, heightSegments);
+  const positions = geometry.attributes.position;
+
+  for (let i = 0; i < positions.count; i++) {
+    let x = positions.getX(i);
+    let y = positions.getY(i);
+    let z = positions.getZ(i);
+
+    // Flatten into ellipsoid shape (bean proportions) - CHUNKIER
+    x *= 0.7;   // Wider than before
+    y *= 0.9;   // Slightly shorter
+    z *= 0.85;  // Thicker/rounder
+
+    // Add the characteristic coffee bean crease on one side
+    // The crease runs along the Y axis on the +X side
+    if (x > 0) {
+      const creaseDepth = 0.12;
+      // Crease is strongest at x=0.3, fades toward edges
+      const creaseInfluence = Math.exp(-y * y * 2.5) * Math.exp(-(x - 0.3) * (x - 0.3) * 6);
+      x -= creaseDepth * creaseInfluence;
+      // Also pinch the z slightly for the crease
+      z *= 1 - creaseInfluence * 0.25;
+    }
+
+    // Slight taper at the ends
+    const taperAmount = 0.1;
+    const taper = 1 - Math.abs(y) * taperAmount;
+    x *= taper;
+    z *= taper;
+
+    positions.setXYZ(i, x, y, z);
+  }
+
+  geometry.computeVertexNormals();
+  return geometry;
+}
 
 // ============================================
 // INITIALIZATION
@@ -70,8 +213,6 @@ function init() {
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.2;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   // Ambient light - overall brightness
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -81,19 +222,9 @@ function init() {
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0xb97a56, 0.6);
   scene.add(hemiLight);
 
-  // Key light from front - casts shadows
+  // Key light from front
   const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
   keyLight.position.set(5, 8, 10);
-  keyLight.castShadow = true;
-  keyLight.shadow.mapSize.width = 1024;
-  keyLight.shadow.mapSize.height = 1024;
-  keyLight.shadow.camera.near = 0.5;
-  keyLight.shadow.camera.far = 50;
-  keyLight.shadow.camera.left = -15;
-  keyLight.shadow.camera.right = 15;
-  keyLight.shadow.camera.top = 15;
-  keyLight.shadow.camera.bottom = -15;
-  keyLight.shadow.bias = -0.001;
   scene.add(keyLight);
 
   // Fill light from left
@@ -101,8 +232,33 @@ function init() {
   fillLight.position.set(-4, 2, 3);
   scene.add(fillLight);
 
-  // Load model
-  loadBeanModel();
+  // Post-processing with CMYK effect
+  const renderTarget = new THREE.WebGLRenderTarget(
+    window.innerWidth,
+    window.innerHeight,
+    {
+      format: THREE.RGBAFormat,
+      stencilBuffer: false
+    }
+  );
+
+  composer = new EffectComposer(renderer, renderTarget);
+  composer.addPass(new RenderPass(scene, camera));
+
+  const cmykPass = new ShaderPass(CMYKShader);
+  cmykPass.renderToScreen = true;
+  composer.addPass(cmykPass);
+
+  // Create shared geometry and material
+  beanGeometry = createBeanGeometry();
+  beanMaterial = new THREE.ShaderMaterial({
+    vertexShader: CoffeeBeanShader.vertexShader,
+    fragmentShader: CoffeeBeanShader.fragmentShader
+  });
+
+  // Create beans and start animation
+  createBeans();
+  animate();
 
   // Setup debug GUI only if ?d=1
   if (isDebug) {
@@ -177,64 +333,12 @@ function updateVelocities() {
 }
 
 // ============================================
-// MODEL LOADING
-// ============================================
-function loadBeanModel() {
-  const loader = new GLTFLoader();
-
-  // Setup Draco decoder for compressed models
-  const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/');
-  loader.setDRACOLoader(dracoLoader);
-
-  // Load the diffuse texture first
-  const textureLoader = new THREE.TextureLoader();
-  textureLoader.load(
-    'assets/coffee_bean/textures/Coffee_DM_01_01_diffuse.png',
-    function(diffuseTexture) {
-      diffuseTexture.colorSpace = THREE.SRGBColorSpace;
-      diffuseTexture.flipY = false; // GLTF models typically need this
-
-      // Now load the model
-      loader.load(
-        CONFIG.modelPath,
-        function(gltf) {
-          beanModel = gltf.scene;
-
-          // Apply the diffuse texture to all meshes and enable shadows
-          beanModel.traverse((child) => {
-            if (child.isMesh) {
-              child.material = new THREE.MeshStandardMaterial({
-                map: diffuseTexture,
-                roughness: 0.7,
-                metalness: 0.1
-              });
-              child.castShadow = false;
-              child.receiveShadow = false;
-            }
-          });
-
-          createBeans();
-          animate();
-        },
-        function(xhr) {
-          console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-        },
-        function(error) {
-          console.error('Error loading bean model:', error);
-        }
-      );
-    }
-  );
-}
-
-// ============================================
 // CREATE BEANS
 // ============================================
 function createBeans() {
   for (let i = 0; i < CONFIG.beanCount; i++) {
-    // Clone the entire loaded model
-    const bean = beanModel.clone();
+    // Create mesh with shared geometry and material
+    const bean = new THREE.Mesh(beanGeometry, beanMaterial);
 
     // Random position
     bean.position.set(
@@ -328,7 +432,7 @@ function animate() {
     }
   });
 
-  renderer.render(scene, camera);
+  composer.render();
 }
 
 // ============================================
@@ -338,6 +442,7 @@ function handleResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
 }
 
 // ============================================
