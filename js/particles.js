@@ -5,17 +5,28 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import GUI from 'lil-gui';
 
 // ============================================
 // CONFIGURATION
 // ============================================
+// Detect mobile and debug mode
+const isMobile = window.innerWidth <= 640;
+const isDebug = new URLSearchParams(window.location.search).get('d') === '1';
+
 const CONFIG = {
-  beanCount: 100,
-  driftSpeed: 0.12,
-  rotationSpeed: 0.4,
-  beanScale: { min: 0.08, max: 0.18 },
-  depth: { min: -4, max: 2 },
-  spread: { x: 12, y: 8 },
+  beanCount: isMobile ? 90 : 121,
+  driftSpeed: 0.36,
+  rotationSpeed: 2,
+  scaleMin: 0.08,
+  scaleMax: 0.21,
+  depthMin: -5,
+  depthMax: 2,
+  spreadX: 12,
+  spreadY: 8,
+  staggerDelay: 11,
+  animationDuration: 500,
+  overshoot: 1.35,
   modelPath: 'assets/coffee_bean/scene.gltf'
 };
 
@@ -25,6 +36,8 @@ const CONFIG = {
 let scene, camera, renderer;
 let beans = [];
 let beanModel = null;
+let gui = null;
+let diffuseTexture = null;
 
 // ============================================
 // INITIALIZATION
@@ -91,7 +104,76 @@ function init() {
   // Load model
   loadBeanModel();
 
+  // Setup debug GUI only if ?d=1
+  if (isDebug) {
+    setupGUI();
+  }
+
   window.addEventListener('resize', handleResize);
+}
+
+// ============================================
+// DEBUG GUI
+// ============================================
+
+// Debounce helper
+let debounceTimer = null;
+function debouncedReset() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(resetBeans, 150);
+}
+
+function setupGUI() {
+  gui = new GUI({ title: 'Bean Controls' });
+
+  // Beans folder
+  const beansFolder = gui.addFolder('Beans');
+  beansFolder.add(CONFIG, 'beanCount', 10, 200, 1).name('Count').onFinishChange(resetBeans);
+  beansFolder.add(CONFIG, 'scaleMin', 0.02, 0.2, 0.01).name('Scale Min').onFinishChange(resetBeans);
+  beansFolder.add(CONFIG, 'scaleMax', 0.05, 0.4, 0.01).name('Scale Max').onFinishChange(resetBeans);
+
+  // Movement folder
+  const moveFolder = gui.addFolder('Movement');
+  moveFolder.add(CONFIG, 'driftSpeed', 0, 0.5, 0.01).name('Drift Speed').onFinishChange(updateVelocities);
+  moveFolder.add(CONFIG, 'rotationSpeed', 0, 3, 0.05).name('Spin Speed').onFinishChange(updateVelocities);
+
+  // Spread folder
+  const spreadFolder = gui.addFolder('Spread');
+  spreadFolder.add(CONFIG, 'spreadX', 5, 25, 1).name('Spread X').onFinishChange(resetBeans);
+  spreadFolder.add(CONFIG, 'spreadY', 3, 15, 1).name('Spread Y').onFinishChange(resetBeans);
+  spreadFolder.add(CONFIG, 'depthMin', -10, 0, 0.5).name('Depth Min').onFinishChange(resetBeans);
+  spreadFolder.add(CONFIG, 'depthMax', 0, 10, 0.5).name('Depth Max').onFinishChange(resetBeans);
+
+  // Animation folder - these reset automatically with debounce
+  const animFolder = gui.addFolder('Animation');
+  animFolder.add(CONFIG, 'staggerDelay', 5, 50, 1).name('Stagger Delay (ms)').onFinishChange(debouncedReset);
+  animFolder.add(CONFIG, 'animationDuration', 200, 1000, 50).name('Anim Duration (ms)').onFinishChange(debouncedReset);
+  animFolder.add(CONFIG, 'overshoot', 1, 1.5, 0.05).name('Overshoot').onFinishChange(debouncedReset);
+
+  // Actions
+  gui.add({ reset: resetBeans }, 'reset').name('🔄 Reset & Replay');
+}
+
+function resetBeans() {
+  // Kill any running GSAP tweens and remove existing beans
+  beans.forEach(bean => {
+    gsap.killTweensOf(bean.scale);
+    scene.remove(bean);
+  });
+  beans = [];
+
+  // Create new beans
+  createBeans();
+}
+
+function updateVelocities() {
+  beans.forEach(bean => {
+    bean.userData.vx = (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015;
+    bean.userData.vy = (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015;
+    bean.userData.vrx = (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008;
+    bean.userData.vry = (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008;
+    bean.userData.vrz = (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008;
+  });
 }
 
 // ============================================
@@ -127,8 +209,8 @@ function loadBeanModel() {
                 roughness: 0.7,
                 metalness: 0.1
               });
-              child.castShadow = true;
-              child.receiveShadow = true;
+              child.castShadow = false;
+              child.receiveShadow = false;
             }
           });
 
@@ -156,9 +238,9 @@ function createBeans() {
 
     // Random position
     bean.position.set(
-      (Math.random() - 0.5) * CONFIG.spread.x * 2,
-      (Math.random() - 0.5) * CONFIG.spread.y * 2,
-      CONFIG.depth.min + Math.random() * (CONFIG.depth.max - CONFIG.depth.min)
+      (Math.random() - 0.5) * CONFIG.spreadX * 2,
+      (Math.random() - 0.5) * CONFIG.spreadY * 2,
+      CONFIG.depthMin + Math.random() * (CONFIG.depthMax - CONFIG.depthMin)
     );
 
     // Random rotation
@@ -169,20 +251,18 @@ function createBeans() {
     );
 
     // Random scale - start at 0 (invisible)
-    const targetScale = CONFIG.beanScale.min +
-      Math.random() * (CONFIG.beanScale.max - CONFIG.beanScale.min);
+    const targetScale = CONFIG.scaleMin +
+      Math.random() * (CONFIG.scaleMax - CONFIG.scaleMin);
     bean.scale.setScalar(0); // Start invisible
 
-    // Store velocity and reveal data for animation
+    // Store velocity data for animation
     bean.userData = {
       vx: (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015,
       vy: (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015,
       vrx: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
       vry: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
       vrz: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
-      targetScale: targetScale,
-      revealed: false,
-      revealStart: 0
+      targetScale: targetScale
     };
 
     scene.add(bean);
@@ -194,42 +274,27 @@ function createBeans() {
 }
 
 // ============================================
-// STAGGERED REVEAL
+// STAGGERED REVEAL (GSAP)
 // ============================================
 function revealBeansStaggered() {
   // Shuffle beans for random reveal order
   const shuffled = [...beans].sort(() => Math.random() - 0.5);
 
   shuffled.forEach((bean, i) => {
-    setTimeout(() => {
-      bean.userData.revealed = true;
-      bean.userData.revealStart = performance.now();
-    }, i * 15); // 15ms between each bean (~1.5 sec total)
+    const targetScale = bean.userData.targetScale;
+    const delay = i * CONFIG.staggerDelay / 1000; // Convert to seconds for GSAP
+    const duration = CONFIG.animationDuration / 1000;
+
+    // GSAP elastic ease gives us the spring/bounce effect
+    gsap.to(bean.scale, {
+      x: targetScale,
+      y: targetScale,
+      z: targetScale,
+      duration: duration,
+      delay: delay,
+      ease: `elastic.out(1, ${0.3 / (CONFIG.overshoot - 1 + 0.01)})` // Dynamic bounce based on overshoot
+    });
   });
-}
-
-// ============================================
-// SPRING ANIMATION
-// ============================================
-function springAnimation(t) {
-  // 0 -> overshoot to ~1.25 -> settle at 1
-  if (t >= 1) return 1;
-
-  const overshoot = 1.25; // Peak scale (25% larger)
-  const settleSpeed = 3;  // How fast it settles after peak
-
-  // Quick grow to overshoot, then settle
-  if (t < 0.4) {
-    // Fast grow phase: 0 -> 1.25
-    const growProgress = t / 0.4;
-    const eased = 1 - Math.pow(1 - growProgress, 3); // ease out cubic
-    return overshoot * eased;
-  } else {
-    // Settle phase: 1.25 -> 1
-    const settleProgress = (t - 0.4) / 0.6;
-    const eased = 1 - Math.pow(1 - settleProgress, 2); // ease out quad
-    return overshoot - (overshoot - 1) * eased;
-  }
 }
 
 // ============================================
@@ -238,33 +303,23 @@ function springAnimation(t) {
 function animate() {
   requestAnimationFrame(animate);
 
-  const now = performance.now();
-
   beans.forEach(bean => {
-    const { vx, vy, vrx, vry, vrz, revealed, revealStart, targetScale } = bean.userData;
+    const { vx, vy, vrx, vry, vrz } = bean.userData;
 
-    // Handle reveal animation
-    if (revealed) {
-      const elapsed = now - revealStart;
-      const progress = Math.min(elapsed / 500, 1); // 500ms for spring to settle
-      const spring = springAnimation(progress);
-      bean.scale.setScalar(targetScale * spring);
-    }
-
-    // Only move/rotate if bean is visible
+    // Only animate if bean is visible (GSAP handles scale)
     if (bean.scale.x > 0) {
-      // Move
+      // Drift
       bean.position.x += vx;
       bean.position.y += vy;
 
-      // Rotate
+      // Spin (rotate around own axis)
       bean.rotation.x += vrx;
       bean.rotation.y += vry;
       bean.rotation.z += vrz;
 
       // Wrap around edges
-      const boundX = CONFIG.spread.x + 2;
-      const boundY = CONFIG.spread.y + 2;
+      const boundX = CONFIG.spreadX + 2;
+      const boundY = CONFIG.spreadY + 2;
 
       if (bean.position.x > boundX) bean.position.x = -boundX;
       if (bean.position.x < -boundX) bean.position.x = boundX;
