@@ -168,22 +168,67 @@ function createBeans() {
       Math.random() * Math.PI * 2
     );
 
-    // Random scale
-    const scale = CONFIG.beanScale.min +
+    // Random scale - start at 0 (invisible)
+    const targetScale = CONFIG.beanScale.min +
       Math.random() * (CONFIG.beanScale.max - CONFIG.beanScale.min);
-    bean.scale.setScalar(scale);
+    bean.scale.setScalar(0); // Start invisible
 
-    // Store velocity data for animation
+    // Store velocity and reveal data for animation
     bean.userData = {
       vx: (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015,
       vy: (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015,
       vrx: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
       vry: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
-      vrz: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008
+      vrz: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
+      targetScale: targetScale,
+      revealed: false,
+      revealStart: 0
     };
 
     scene.add(bean);
     beans.push(bean);
+  }
+
+  // Start staggered reveal
+  revealBeansStaggered();
+}
+
+// ============================================
+// STAGGERED REVEAL
+// ============================================
+function revealBeansStaggered() {
+  // Shuffle beans for random reveal order
+  const shuffled = [...beans].sort(() => Math.random() - 0.5);
+
+  shuffled.forEach((bean, i) => {
+    setTimeout(() => {
+      bean.userData.revealed = true;
+      bean.userData.revealStart = performance.now();
+    }, i * 15); // 15ms between each bean (~1.5 sec total)
+  });
+}
+
+// ============================================
+// SPRING ANIMATION
+// ============================================
+function springAnimation(t) {
+  // 0 -> overshoot to ~1.25 -> settle at 1
+  if (t >= 1) return 1;
+
+  const overshoot = 1.25; // Peak scale (25% larger)
+  const settleSpeed = 3;  // How fast it settles after peak
+
+  // Quick grow to overshoot, then settle
+  if (t < 0.4) {
+    // Fast grow phase: 0 -> 1.25
+    const growProgress = t / 0.4;
+    const eased = 1 - Math.pow(1 - growProgress, 3); // ease out cubic
+    return overshoot * eased;
+  } else {
+    // Settle phase: 1.25 -> 1
+    const settleProgress = (t - 0.4) / 0.6;
+    const eased = 1 - Math.pow(1 - settleProgress, 2); // ease out quad
+    return overshoot - (overshoot - 1) * eased;
   }
 }
 
@@ -193,26 +238,39 @@ function createBeans() {
 function animate() {
   requestAnimationFrame(animate);
 
+  const now = performance.now();
+
   beans.forEach(bean => {
-    const { vx, vy, vrx, vry, vrz } = bean.userData;
+    const { vx, vy, vrx, vry, vrz, revealed, revealStart, targetScale } = bean.userData;
 
-    // Move
-    bean.position.x += vx;
-    bean.position.y += vy;
+    // Handle reveal animation
+    if (revealed) {
+      const elapsed = now - revealStart;
+      const progress = Math.min(elapsed / 500, 1); // 500ms for spring to settle
+      const spring = springAnimation(progress);
+      bean.scale.setScalar(targetScale * spring);
+    }
 
-    // Rotate
-    bean.rotation.x += vrx;
-    bean.rotation.y += vry;
-    bean.rotation.z += vrz;
+    // Only move/rotate if bean is visible
+    if (bean.scale.x > 0) {
+      // Move
+      bean.position.x += vx;
+      bean.position.y += vy;
 
-    // Wrap around edges
-    const boundX = CONFIG.spread.x + 2;
-    const boundY = CONFIG.spread.y + 2;
+      // Rotate
+      bean.rotation.x += vrx;
+      bean.rotation.y += vry;
+      bean.rotation.z += vrz;
 
-    if (bean.position.x > boundX) bean.position.x = -boundX;
-    if (bean.position.x < -boundX) bean.position.x = boundX;
-    if (bean.position.y > boundY) bean.position.y = -boundY;
-    if (bean.position.y < -boundY) bean.position.y = boundY;
+      // Wrap around edges
+      const boundX = CONFIG.spread.x + 2;
+      const boundY = CONFIG.spread.y + 2;
+
+      if (bean.position.x > boundX) bean.position.x = -boundX;
+      if (bean.position.x < -boundX) bean.position.x = boundX;
+      if (bean.position.y > boundY) bean.position.y = -boundY;
+      if (bean.position.y < -boundY) bean.position.y = boundY;
+    }
   });
 
   renderer.render(scene, camera);
