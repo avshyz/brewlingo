@@ -119,7 +119,7 @@
       gap: 1rem;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 600px) {
       .recipe-grid {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -165,16 +165,20 @@
     /* Parameters Row - chip style */
     .params-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 0.4rem;
       margin-bottom: 0.75rem;
     }
 
+    @media (min-width: 800px) {
+      .params-row {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
     .param {
       text-align: center;
-      padding: 0.35rem 0.25rem;
       background: var(--white);
-      border: 2px solid var(--black);
     }
 
     .param-label {
