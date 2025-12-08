@@ -1,0 +1,11 @@
+Model Information:
+* title:	Coffee bean
+* source:	https://sketchfab.com/3d-models/coffee-bean-9cae5abb7c2e4e57a405579fa6922672
+* author:	Digital Archive of Natural History (DiNArDa) (https://sketchfab.com/disc3d)
+
+Model License:
+* license type:	CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
+* requirements:	Author must be credited. No commercial use. Modified versions must have the same license.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Coffee bean" (https://sketchfab.com/3d-models/coffee-bean-9cae5abb7c2e4e57a405579fa6922672) by Digital Archive of Natural History (DiNArDa) (https://sketchfab.com/disc3d) licensed under CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)

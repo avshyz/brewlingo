@@ -183,6 +183,7 @@
   </style>
 </head>
 <body>
+  <canvas id="particle-canvas"></canvas>
   <div class="landing-page">
     <div class="landing-card">
       <!-- Hero section -->
@@ -215,5 +216,16 @@
       </section>
     </div>
   </div>
+
+  <!-- Three.js for particle effect -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="js/particles.js"></script>
 </body>
 </html>
