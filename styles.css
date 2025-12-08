@@ -157,6 +157,21 @@ header {
       margin-top: 0.5rem;
       font-family: 'Space Mono', monospace;
     }
+
+    & a {
+      text-decoration: none;
+      /* Copy the gradient so we can animate it independently */
+      background: linear-gradient(90deg, #000 0%, #000 33%, #0FF 50%, #F0F 66%, #FF0 83%, #000 100%);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: gradient-flow 16s linear infinite 2s;
+
+      &:hover {
+        animation-duration: 2s;
+      }
+    }
   }
 }
 
@@ -1051,15 +1066,7 @@ footer {
     padding-bottom: 4rem;
     letter-spacing: -0.02em;
     text-transform: uppercase;
-    background: linear-gradient(
-      90deg,
-      #000000 0%,
-      #000000 33%,
-      #00FFFF 50%,
-      #FF00FF 66%,
-      #FFFF00 83%,
-      #000000 100%
-    );
+    background: linear-gradient(90deg, #000 0%, #000 33%, #0FF 50%, #F0F 66%, #FF0 83%, #000 100%);
     background-size: 300% 100%;
     animation: gradient-flow 16s linear infinite;
     background-position: 0% 50%;
