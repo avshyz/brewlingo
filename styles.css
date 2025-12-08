@@ -469,6 +469,7 @@ dialog {
     max-height: 100%;
     height: 100%;
     border: none;
+    border-radius: 0;
     box-shadow: none;
   }
 }
@@ -592,6 +593,19 @@ dialog.closing {
 ::view-transition-new(shared-header) {
   border-radius: 0.75rem 0.75rem 0 0;
   overflow: hidden;
+}
+
+@media (max-width: 500px) {
+  ::view-transition-old(shared-card),
+  ::view-transition-new(shared-card) {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  ::view-transition-old(shared-header),
+  ::view-transition-new(shared-header) {
+    border-radius: 0;
+  }
 }
 
 /* Crossfade for description text (different content between preview and full) */
