@@ -33,11 +33,14 @@
   }
 }
 
-body {
-  font-family: 'Space Mono', monospace;
+html {
   background-color: var(--white);
   background-image: radial-gradient(circle, var(--black) 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+body {
+  font-family: 'Space Mono', monospace;
   min-height: 100vh;
 }
 
