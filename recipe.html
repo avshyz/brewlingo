@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="view-transition" content="same-origin">
+  <script src="js/page-transitions.js"></script>
   <title>Recipe Baseline | Brewlingo</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -220,7 +222,7 @@
   </style>
 </head>
 <body>
-  <a href="index.html" class="back-link" aria-label="Back to home">
+  <a href="index.html" class="back-link" aria-label="Back to home" onclick="event.preventDefault(); history.back()">
     <i class="fa-solid fa-arrow-left"></i>
   </a>
 

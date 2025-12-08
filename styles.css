@@ -958,3 +958,52 @@ footer::before {
 .tap-hint::after {
   content: '—';
 }
+
+/* PAGE TRANSITIONS (Cross-Document View Transitions) */
+@view-transition {
+  navigation: auto;
+}
+
+/* Page slide transitions - only during cross-document navigation */
+:active-view-transition-type(slide)::view-transition-old(root),
+:active-view-transition-type(slide)::view-transition-new(root) {
+  opacity: 1; /* Override wildcard opacity */
+}
+
+/* Slide forward (default) */
+:active-view-transition-type(slide)::view-transition-old(root) {
+  animation: slide-to-left 200ms ease-in-out forwards;
+}
+
+:active-view-transition-type(slide)::view-transition-new(root) {
+  animation: slide-from-right 200ms ease-in-out forwards;
+}
+
+/* Slide back */
+:active-view-transition-type(slide):active-view-transition-type(back)::view-transition-old(root) {
+  animation: slide-to-right 200ms ease-in-out forwards;
+}
+
+:active-view-transition-type(slide):active-view-transition-type(back)::view-transition-new(root) {
+  animation: slide-from-left 200ms ease-in-out forwards;
+}
+
+@keyframes slide-to-left {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100%); opacity: 1; }
+}
+
+@keyframes slide-from-right {
+  from { transform: translateX(100%); opacity: 1; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-to-right {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 1; }
+}
+
+@keyframes slide-from-left {
+  from { transform: translateX(-100%); opacity: 1; }
+  to { transform: translateX(0); opacity: 1; }
+}
