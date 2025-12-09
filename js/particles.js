@@ -28,11 +28,11 @@ const CONFIG = {
   animationDuration: 1000,
   elasticAmplitude: 1.5,
   elasticPeriod: 0.3,
-  cmykOffset: 0.004,
+  cmykOffset: 0.002,
   cmykBreatheEnabled: true,
-  cmykBreatheIntensity: 0.3,
+  cmykBreatheIntensity: 0.5,
   cmykBreatheSpeed: 0.8,
-  cmykBreatheStagger: 3.0,
+  cmykBreatheWaveFreq: 0.5,
   cmykRotationSpeed: 0.4,
   creaseWidth: 0.035,
   creaseLength: 0.7,
@@ -59,7 +59,7 @@ const CMYKShader = {
     breatheEnabled: { value: CONFIG.cmykBreatheEnabled ? 1.0 : 0.0 },
     breatheIntensity: { value: CONFIG.cmykBreatheIntensity },
     breatheSpeed: { value: CONFIG.cmykBreatheSpeed },
-    breatheStagger: { value: CONFIG.cmykBreatheStagger },
+    breatheWaveFreq: { value: CONFIG.cmykBreatheWaveFreq },
     rotationSpeed: { value: CONFIG.cmykRotationSpeed }
   },
   vertexShader: `
@@ -76,19 +76,24 @@ const CMYKShader = {
     uniform float breatheEnabled;
     uniform float breatheIntensity;
     uniform float breatheSpeed;
-    uniform float breatheStagger;
+    uniform float breatheWaveFreq;
     uniform float rotationSpeed;
     varying vec2 vUv;
+
+    const float TAU = 6.28318530718;
 
     void main() {
       // Original center sample
       vec4 center = texture2D(tDiffuse, vUv);
 
-      // Phase offset based on screen position for staggered breathing
-      float phaseOffset = (vUv.x + vUv.y) * breatheStagger;
+      // Traveling wave from left to right: sin(kx - ωt)
+      // waveFreq controls how many wave cycles fit across the screen
+      // breatheSpeed controls how fast the wave travels rightward
+      float wavePhase = vUv.x * breatheWaveFreq * TAU - time * breatheSpeed;
+      float wave = sin(wavePhase);
 
-      // Animated offset with staggered breathing (when enabled)
-      float breathe = 1.0 + breatheEnabled * breatheIntensity * sin(time * breatheSpeed + phaseOffset);
+      // Apply breathing modulation (when enabled)
+      float breathe = 1.0 + breatheEnabled * breatheIntensity * wave;
       float animOffset = offset * breathe;
 
       // Slowly rotating angle for each color channel (120° apart)
@@ -443,8 +448,8 @@ function setupGUI() {
   cmykFolder.add(CONFIG, 'cmykBreatheSpeed', 0, 3, 0.1).name('Breathe Speed').onChange(v => {
     cmykPass.uniforms.breatheSpeed.value = v;
   });
-  cmykFolder.add(CONFIG, 'cmykBreatheStagger', 0, 10, 0.5).name('Breathe Stagger').onChange(v => {
-    cmykPass.uniforms.breatheStagger.value = v;
+  cmykFolder.add(CONFIG, 'cmykBreatheWaveFreq', 0.5, 5, 0.25).name('Wave Freq').onChange(v => {
+    cmykPass.uniforms.breatheWaveFreq.value = v;
   });
   cmykFolder.add(CONFIG, 'cmykRotationSpeed', 0, 2, 0.05).name('Rotation Speed').onChange(v => {
     cmykPass.uniforms.rotationSpeed.value = v;
