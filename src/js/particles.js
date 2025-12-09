@@ -353,7 +353,12 @@ function toggleLandingCard(visible) {
 
 // Toggle single bean mode (wrapper for transition functions)
 function toggleSingleBeanMode(enabled) {
-  if (isTransitioning) return;
+  if (isTransitioning) {
+    // Revert checkbox to previous state
+    CONFIG.singleBeanMode = !enabled;
+    if (gui) gui.controllersRecursive().find(c => c.property === 'singleBeanMode')?.updateDisplay();
+    return;
+  }
   isTransitioning = true;
 
   if (enabled) {
