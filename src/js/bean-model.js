@@ -60,9 +60,80 @@ function smoothstep(edge0, edge1, x) {
 }
 
 // ============================================
-// PARAMETRIC BEAN GEOMETRY
+// PARAMETRIC BEAN GEOMETRY - CLASSIC (ellipsoid-based)
 // ============================================
-export function createBeanGeometry(config = BEAN_CONFIG, params = {}) {
+export function createBeanGeometryClassic(config = BEAN_CONFIG, params = {}) {
+  const {
+    segmentsU = 48,
+    segmentsV = 32,
+    grooveDepth = 0.2,
+    grooveWidth = 0.25
+  } = params;
+
+  const scaleX = config.beanScaleX;
+  const scaleY = config.beanScaleY;
+  const scaleZ = config.beanScaleZ;
+
+  const vertices = [];
+  const indices = [];
+  const uvParams = [];
+
+  for (let iv = 0; iv <= segmentsV; iv++) {
+    const v = (iv / segmentsV) * 2 - 1;
+
+    for (let iu = 0; iu <= segmentsU; iu++) {
+      const u = (iu / segmentsU) * 2 - 1;
+
+      const theta = Math.acos(v);
+      const phi = u * Math.PI;
+
+      let x = Math.sin(theta) * Math.sin(phi) * scaleX;
+      let y = Math.cos(theta) * scaleY;
+      let z = Math.sin(theta) * Math.cos(phi) * scaleZ;
+
+      const grooveMask = smoothstep(grooveWidth, 0, Math.abs(u));
+
+      if (z > 0) {
+        const lengthFactor = 1 - v * v * 0.4;
+        z -= grooveDepth * grooveMask * lengthFactor;
+        x *= 1 - grooveMask * 0.1;
+      }
+
+      z *= 1 + 0.03 * Math.sin(v * Math.PI * 0.5);
+
+      const taper = 1 - Math.abs(v) * 0.08;
+      x *= taper;
+      z *= taper;
+
+      vertices.push(x, y, z);
+      uvParams.push(u, v);
+    }
+  }
+
+  for (let iv = 0; iv < segmentsV; iv++) {
+    for (let iu = 0; iu < segmentsU; iu++) {
+      const a = iv * (segmentsU + 1) + iu;
+      const b = a + 1;
+      const c = a + (segmentsU + 1);
+      const d = c + 1;
+      indices.push(a, b, c);
+      indices.push(b, d, c);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('aUvParams', new THREE.Float32BufferAttribute(uvParams, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+
+  return geometry;
+}
+
+// ============================================
+// PARAMETRIC BEAN GEOMETRY - SUPERELLIPSE (kidney-shaped)
+// ============================================
+export function createBeanGeometrySuperellipse(config = BEAN_CONFIG, params = {}) {
   const {
     segmentsU = 48,
     segmentsV = 32,
@@ -145,6 +216,23 @@ export function createBeanGeometry(config = BEAN_CONFIG, params = {}) {
   geometry.computeVertexNormals();
 
   return geometry;
+}
+
+// ============================================
+// GEOMETRY SELECTOR
+// ============================================
+export const GEOMETRY_TYPES = {
+  CLASSIC: 'classic',
+  SUPERELLIPSE: 'superellipse'
+};
+
+export function createBeanGeometry(config = BEAN_CONFIG, params = {}) {
+  const geometryType = config.geometryType || GEOMETRY_TYPES.SUPERELLIPSE;
+
+  if (geometryType === GEOMETRY_TYPES.CLASSIC) {
+    return createBeanGeometryClassic(config, params);
+  }
+  return createBeanGeometrySuperellipse(config, params);
 }
 
 // ============================================

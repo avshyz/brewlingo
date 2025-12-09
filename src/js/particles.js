@@ -10,6 +10,7 @@ import GUI from 'lil-gui';
 import gsap from 'gsap';
 import {
   BEAN_CONFIG,
+  GEOMETRY_TYPES,
   createBeanGeometry,
   createBeanShaderUniforms,
   BeanShaderVertexShader,
@@ -32,6 +33,7 @@ const CONFIG = {
   showUI: true,           // Show landing card UI
   cmykEnabled: true,      // CMYK on by default for landing
   wireframe: false,       // Show wireframe mesh
+  geometryType: GEOMETRY_TYPES.CLASSIC,  // Bean geometry style
   // Scene settings (not in BEAN_CONFIG)
   beanCount: 200,
   driftSpeed: 0.5,
@@ -407,6 +409,11 @@ function setupGUI() {
   addViewControl('wireframe').name('🔲 Wireframe').onChange(v => {
     beanMaterial.wireframe = v;
   });
+  viewFolder.add(CONFIG, 'geometryType', {
+    'Classic (ellipsoid)': GEOMETRY_TYPES.CLASSIC,
+    'Superellipse (kidney)': GEOMETRY_TYPES.SUPERELLIPSE
+  }).name('🫘 Geometry').onChange(rebuildGeometry);
+  viewKeys.add('geometryType');
   addResetButton(viewFolder, () => {
     cmykPass.enabled = CONFIG.cmykEnabled;
     beanMaterial.wireframe = CONFIG.wireframe;
