@@ -317,8 +317,7 @@ header {
     }
 
     & .card-icon {
-      filter: drop-shadow(calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black));
-      transform: translate(calc(var(--card-shadow-offset) * -1), calc(var(--card-shadow-offset) * -1));
+      filter: drop-shadow(var(--card-shadow-offset) var(--card-shadow-offset) 0 var(--black));
     }
 
     & .chip,
@@ -1250,8 +1249,7 @@ footer {
     box-shadow: calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black);
 
     & .feature-card-icon {
-      filter: drop-shadow(calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black));
-      transform: translate(calc(var(--card-shadow-offset) * -1), calc(var(--card-shadow-offset) * -1));
+      filter: drop-shadow(var(--card-shadow-offset) var(--card-shadow-offset) 0 var(--black));
     }
 
     & h3 {
