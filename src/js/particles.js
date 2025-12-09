@@ -35,6 +35,7 @@ const CONFIG = {
   showUI: true,           // Show landing card UI
   cmykEnabled: true,      // CMYK on by default for landing
   wireframe: false,       // Show wireframe mesh
+  preset: 'modern',       // Visual preset (classic, modern, lively)
   geometryType: GEOMETRY_TYPES.SUPERELLIPSE,  // Bean geometry style
   // Scene settings (not in BEAN_CONFIG)
   beanCount: 200,
@@ -93,6 +94,7 @@ let gui = null;
 let heroBean = null;  // The featured bean in single-bean mode
 let isTransitioning = false;
 let cmykController = null;  // Reference to update checkbox when mode toggles
+let showUIController = null;  // Reference to disable in single bean mode
 let landingCard = null;  // Reference to .landing-card element
 
 // Drag-to-rotate state
@@ -355,6 +357,69 @@ function toggleLandingCard(visible) {
   });
 }
 
+// Preset definitions
+const PRESETS = {
+  classic: {
+    geometryType: GEOMETRY_TYPES.CLASSIC,
+    toonEnabled: false,
+    rimEnabled: false,
+    specularEnabled: false,
+    colorEnabled: false
+  },
+  modern: {
+    geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
+    toonEnabled: false,
+    rimEnabled: false,
+    specularEnabled: true,
+    colorEnabled: false
+  },
+  lively: {
+    geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
+    toonEnabled: true,
+    rimEnabled: true,
+    specularEnabled: true,
+    colorEnabled: true
+  }
+};
+
+// Apply a visual preset
+function applyPreset(presetName) {
+  const preset = PRESETS[presetName];
+  if (!preset) return;
+
+  // Apply geometry type and dimensions
+  CONFIG.geometryType = preset.geometryType;
+  const dims = preset.geometryType === GEOMETRY_TYPES.CLASSIC ? CLASSIC_DEFAULT_DIMS : SUPERELLIPSE_DEFAULT_DIMS;
+  CONFIG.beanScaleX = dims.beanScaleX;
+  CONFIG.beanScaleY = dims.beanScaleY;
+  CONFIG.beanScaleZ = dims.beanScaleZ;
+
+  // Apply shader settings
+  CONFIG.toonEnabled = preset.toonEnabled;
+  CONFIG.rimEnabled = preset.rimEnabled;
+  CONFIG.specularEnabled = preset.specularEnabled;
+  CONFIG.colorEnabled = preset.colorEnabled;
+
+  // Update uniforms
+  beanMaterial.uniforms.toonEnabled.value = preset.toonEnabled ? 1.0 : 0.0;
+  beanMaterial.uniforms.rimEnabled.value = preset.rimEnabled ? 1.0 : 0.0;
+  beanMaterial.uniforms.specularEnabled.value = preset.specularEnabled ? 1.0 : 0.0;
+  beanMaterial.uniforms.colorEnabled.value = preset.colorEnabled ? 1.0 : 0.0;
+
+  // Rebuild geometry for new type
+  rebuildGeometry();
+
+  // Update all GUI controllers
+  if (gui) {
+    gui.controllersRecursive().forEach(c => {
+      if (['geometryType', 'beanScaleX', 'beanScaleY', 'beanScaleZ',
+           'toonEnabled', 'rimEnabled', 'specularEnabled', 'colorEnabled'].includes(c.property)) {
+        c.updateDisplay();
+      }
+    });
+  }
+}
+
 // Toggle single bean mode (wrapper for transition functions)
 function toggleSingleBeanMode(enabled) {
   if (isTransitioning) {
@@ -404,13 +469,19 @@ function setupGUI() {
 
   const viewFolder = createFolder(gui, '👁 View');
   addViewControl('singleBeanMode').name('🫘 Single Bean Mode').onChange(toggleSingleBeanMode);
-  addViewControl('showUI').name('👁 Show UI').onChange(toggleLandingCard);
+  showUIController = addViewControl('showUI').name('👁 Show UI').onChange(toggleLandingCard);
   cmykController = addViewControl('cmykEnabled').name('✨ CMYK Halo').onChange(v => {
     cmykPass.enabled = v;
   });
   addViewControl('wireframe').name('🔲 Wireframe').onChange(v => {
     beanMaterial.wireframe = v;
   });
+  viewFolder.add(CONFIG, 'preset', {
+    'Classic': 'classic',
+    'Modern': 'modern',
+    'Lively': 'lively'
+  }).name('🎨 Preset').onChange(applyPreset);
+  viewKeys.add('preset');
   viewFolder.add(CONFIG, 'geometryType', {
     'Classic (ellipsoid)': GEOMETRY_TYPES.CLASSIC,
     'Superellipse (kidney)': GEOMETRY_TYPES.SUPERELLIPSE
@@ -458,17 +529,17 @@ function setupGUI() {
   entrySub.add(CONFIG, 'elasticPeriod', 0.1, 1, 0.05).name('Bounce Speed').onFinishChange(debouncedReset);
   addResetButton(entrySub, debouncedReset);
 
+  const sizeSub = createFolder(setupFolder, 'Spawn Size Range');
+  sizeSub.add(CONFIG, 'scaleMin', 0.05, 0.3, 0.01).name('Min').onFinishChange(resetBeans);
+  sizeSub.add(CONFIG, 'scaleMax', 0.1, 0.6, 0.01).name('Max').onFinishChange(resetBeans);
+  addResetButton(sizeSub, resetBeans);
+
   // ============================================
   // 🫘 BEAN - Object shape and size
   // ============================================
   const beanFolder = createFolder(gui, '🫘 Bean');
 
-  const sizeSub = createFolder(beanFolder, 'Spawn Size Range');
-  sizeSub.add(CONFIG, 'scaleMin', 0.05, 0.3, 0.01).name('Min').onFinishChange(resetBeans);
-  sizeSub.add(CONFIG, 'scaleMax', 0.1, 0.6, 0.01).name('Max').onFinishChange(resetBeans);
-  addResetButton(sizeSub, resetBeans);
-
-  const shapeSub = createFolder(beanFolder, 'Shape');
+  const shapeSub = createFolder(beanFolder, 'Dimensions');
   shapeSub.add(CONFIG, 'beanScaleX', 0.3, 1, 0.05).name('Width').onFinishChange(rebuildGeometry);
   shapeSub.add(CONFIG, 'beanScaleY', 0.3, 1, 0.05).name('Length').onFinishChange(rebuildGeometry);
   shapeSub.add(CONFIG, 'beanScaleZ', 0.3, 1, 0.05).name('Thickness').onFinishChange(rebuildGeometry);
@@ -601,14 +672,12 @@ function setupGUI() {
   });
 
   // ============================================
-  // 🎬 PLAYBACK - Runtime controls
+  // 🎬 MOTION - Runtime controls
   // ============================================
-  const playbackFolder = createFolder(gui, '🎬 Playback');
-
-  const motionSub = createFolder(playbackFolder, 'Motion');
-  motionSub.add(CONFIG, 'driftSpeed', 0, 1, 0.01).name('Drift').onFinishChange(updateVelocities);
-  motionSub.add(CONFIG, 'rotationSpeed', 0, 5, 0.1).name('Spin').onFinishChange(updateVelocities);
-  addResetButton(motionSub, updateVelocities);
+  const motionFolder = createFolder(gui, '🎬 Motion');
+  motionFolder.add(CONFIG, 'driftSpeed', 0, 1, 0.01).name('Drift').onFinishChange(updateVelocities);
+  motionFolder.add(CONFIG, 'rotationSpeed', 0, 5, 0.1).name('Spin').onFinishChange(updateVelocities);
+  addResetButton(motionFolder, updateVelocities);
 
   // Top-level playback controls (always visible)
   gui.add(CONFIG, 'paused').name('⏸ Pause');
@@ -690,6 +759,9 @@ function transitionToSingleBean() {
   cmykPass.enabled = false;
   if (cmykController) cmykController.updateDisplay();
 
+  // Disable showUI control (no landing card to show in single bean mode)
+  if (showUIController) showUIController.disable();
+
   // Create animation timeline
   const tl = gsap.timeline({
     onComplete: () => {
@@ -706,7 +778,7 @@ function transitionToSingleBean() {
     landingCard.style.pointerEvents = 'none';
     tl.to(landingCard, {
       opacity: 0,
-      scale: 1.3,
+      scale: 1.5,
       duration: duration * 0.9,
       ease: 'expo.inOut'
     }, 0);
@@ -769,6 +841,9 @@ function transitionToMultiBean() {
   beanMaterial.wireframe = false;
   if (cmykController) cmykController.updateDisplay();
   if (gui) gui.controllersRecursive().find(c => c.property === 'wireframe')?.updateDisplay();
+
+  // Re-enable showUI control
+  if (showUIController) showUIController.enable();
 
   // Create animation timeline
   const tl = gsap.timeline({
