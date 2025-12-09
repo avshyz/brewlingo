@@ -1029,8 +1029,14 @@ footer {
   width: 100vw;
   height: calc(100vh + env(safe-area-inset-bottom, 0px));
   height: calc(100lvh + env(safe-area-inset-bottom, 0px));
-  z-index: -1;
+  z-index: 1;
   pointer-events: none;
+
+  /* Single bean mode: canvas receives pointer events */
+  body.single-bean-mode & {
+    z-index: 3;
+    pointer-events: auto;
+  }
 }
 
 /* Page wrapper */
@@ -1040,6 +1046,8 @@ footer {
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  z-index: 2;
+  position: relative;
 
   @media (max-width: 640px) {
     padding: 0.5rem;

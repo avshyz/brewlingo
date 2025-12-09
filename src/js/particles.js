@@ -3,6 +3,7 @@
  * Procedural geometry with cel-shaded look + CMYK post-processing halo
  */
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
@@ -27,6 +28,11 @@ const isDebug = new URLSearchParams(window.location.search).get('d') === '1';
 
 // Merge bean config with scene-specific config
 const CONFIG = {
+  // View options
+  singleBeanMode: false,  // Default unchecked (starts in multi-bean view)
+  showUI: true,           // Show landing card UI
+  autoRotate: false,
+  cmykEnabled: true,      // CMYK on by default for landing
   // Scene settings (not in BEAN_CONFIG)
   beanCount: 200,
   driftSpeed: 0.5,
@@ -49,6 +55,12 @@ const CONFIG = {
   ...BEAN_CONFIG
 };
 
+// Store initial config for reset/export functionality
+const INITIAL_CONFIG = JSON.parse(JSON.stringify(CONFIG));
+
+// View-only keys to exclude from export (populated dynamically from View folder)
+const viewKeys = new Set();
+
 // ============================================
 // CMYK POST-PROCESSING SHADER (edge halo effect)
 // ============================================
@@ -70,11 +82,15 @@ const BeanShader = {
 // ============================================
 // GLOBALS
 // ============================================
-let scene, camera, renderer, composer, cmykPass;
+let scene, camera, renderer, composer, cmykPass, controls;
 let beans = [];
 let beanGeometry = null;
 let beanMaterial = null;
 let gui = null;
+let heroBean = null;  // The featured bean in single-bean mode
+let isTransitioning = false;
+let cmykController = null;  // Reference to update checkbox when mode toggles
+let landingCard = null;  // Reference to .landing-card element
 
 // ============================================
 // INITIALIZATION
@@ -117,7 +133,19 @@ function init() {
 
   cmykPass = new ShaderPass(CMYKShader);
   cmykPass.renderToScreen = true;
+  cmykPass.enabled = CONFIG.cmykEnabled;
   composer.addPass(cmykPass);
+
+  // OrbitControls (disabled by default in multi-bean mode)
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.autoRotate = CONFIG.autoRotate;
+  controls.autoRotateSpeed = 1.0;
+  controls.enabled = CONFIG.singleBeanMode;  // Disabled in multi-bean mode
+
+  // Get landing card reference for fade transitions
+  landingCard = document.querySelector('.landing-card');
 
   // Create geometry and material
   beanGeometry = createBeanGeometry(CONFIG);
@@ -156,6 +184,69 @@ function saveGuiState(state) {
   localStorage.setItem(GUI_STORAGE_KEY, JSON.stringify(state));
 }
 
+// Helper to add reset button to a folder
+function addResetButton(folder, callback) {
+  folder.add({ reset: () => {
+    folder.reset();
+    if (callback) callback();
+  }}, 'reset').name('↺ Reset');
+}
+
+// Export current config as JS object (only changed values, excluding view settings)
+function exportConfig() {
+  const changes = {};
+  for (const key in CONFIG) {
+    if (viewKeys.has(key)) continue;
+    if (JSON.stringify(CONFIG[key]) !== JSON.stringify(INITIAL_CONFIG[key])) {
+      changes[key] = CONFIG[key];
+    }
+  }
+
+  if (Object.keys(changes).length === 0) {
+    alert('No changes from defaults!');
+    return;
+  }
+
+  const output = JSON.stringify(changes, null, 2);
+  navigator.clipboard.writeText(output).then(() => {
+    console.log('Config copied to clipboard:\n', output);
+    alert('Config copied to clipboard! Paste it in chat.');
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+    prompt('Copy this config:', output);
+  });
+}
+
+// Sync all uniforms after reset
+function syncUniforms() {
+  // Cel shading
+  beanMaterial.uniforms.toonEnabled.value = CONFIG.toonEnabled ? 1.0 : 0.0;
+  beanMaterial.uniforms.toonBands.value = CONFIG.toonBands;
+  beanMaterial.uniforms.rimEnabled.value = CONFIG.rimEnabled ? 1.0 : 0.0;
+  beanMaterial.uniforms.rimIntensity.value = CONFIG.rimIntensity;
+  beanMaterial.uniforms.rimPower.value = CONFIG.rimPower;
+  beanMaterial.uniforms.specularEnabled.value = CONFIG.specularEnabled ? 1.0 : 0.0;
+  beanMaterial.uniforms.specularIntensity.value = CONFIG.specularIntensity;
+  beanMaterial.uniforms.specularThreshold.value = CONFIG.specularThreshold;
+  beanMaterial.uniforms.specularPower.value = CONFIG.specularPower;
+  // Colors
+  beanMaterial.uniforms.colorEnabled.value = CONFIG.colorEnabled ? 1.0 : 0.0;
+  beanMaterial.uniforms.baseColor.value.set(CONFIG.baseColor);
+  beanMaterial.uniforms.highlightColor.value.set(CONFIG.highlightColor);
+  beanMaterial.uniforms.creaseColor.value.set(CONFIG.creaseColor);
+  // Crease
+  beanMaterial.uniforms.creaseWidth.value = CONFIG.creaseWidth;
+  beanMaterial.uniforms.creaseLength.value = CONFIG.creaseLength;
+  // Light
+  beanMaterial.uniforms.lightDir.value.set(CONFIG.lightX, CONFIG.lightY, CONFIG.lightZ).normalize();
+  // CMYK
+  cmykPass.uniforms.offset.value = CONFIG.cmykOffset;
+  cmykPass.uniforms.rotationSpeed.value = CONFIG.cmykRotationSpeed;
+  cmykPass.uniforms.breatheEnabled.value = CONFIG.cmykBreatheEnabled ? 1.0 : 0.0;
+  cmykPass.uniforms.breatheIntensity.value = CONFIG.cmykBreatheIntensity;
+  cmykPass.uniforms.breatheSpeed.value = CONFIG.cmykBreatheSpeed;
+}
+
 // Helper to create a folder with persistent open/close state
 function createFolder(parent, name) {
   const folder = parent.addFolder(name);
@@ -185,18 +276,77 @@ function debouncedReset() {
   debounceTimer = setTimeout(resetBeans, 150);
 }
 
+// Toggle landing card visibility
+function toggleLandingCard(visible) {
+  if (!landingCard) return;
+  gsap.to(landingCard, {
+    opacity: visible ? 1 : 0,
+    duration: 0.3,
+    ease: 'power2.inOut',
+    onComplete: () => {
+      landingCard.style.pointerEvents = visible ? 'auto' : 'none';
+    }
+  });
+}
+
+// Toggle single bean mode (wrapper for transition functions)
+function toggleSingleBeanMode(enabled) {
+  if (isTransitioning) return;
+  isTransitioning = true;
+
+  if (enabled) {
+    transitionToSingleBean();
+  } else {
+    transitionToMultiBean();
+  }
+}
+
 function setupGUI() {
   gui = new GUI({ title: 'Debug UI' });
-  const state = getGuiState();
-  if (state['gui-root']) {
-    gui.open();
-  } else {
-    gui.close();
-  }
+  // Debug UI always starts open when d=1
+  gui.open();
   gui.onOpenClose((g) => {
     const current = getGuiState();
     current['gui-root'] = !g._closed;
     saveGuiState(current);
+  });
+
+  // Top-level buttons
+  gui.add({ exportConfig }, 'exportConfig').name('📋 Copy Changes');
+  gui.add({ resetAll: () => {
+    gui.reset();
+    rebuildGeometry();
+    syncUniforms();
+    if (!CONFIG.singleBeanMode) {
+      resetBeans();
+    }
+  }}, 'resetAll').name('↺ Reset All');
+
+  // ============================================
+  // 👁 VIEW - Mode and display options
+  // ============================================
+  // Helper to add control to View folder and track key for export exclusion
+  const addViewControl = (key) => {
+    viewKeys.add(key);
+    return viewFolder.add(CONFIG, key);
+  };
+
+  const viewFolder = createFolder(gui, '👁 View');
+  addViewControl('singleBeanMode').name('🫘 Single Bean Mode').onChange(toggleSingleBeanMode);
+  addViewControl('showUI').name('👁 Show UI').onChange(toggleLandingCard);
+  cmykController = addViewControl('cmykEnabled').name('✨ CMYK Halo').onChange(v => {
+    cmykPass.enabled = v;
+  });
+  addViewControl('autoRotate').name('Auto Rotate').onChange(v => {
+    controls.autoRotate = v;
+  });
+  addResetButton(viewFolder, () => {
+    cmykPass.enabled = CONFIG.cmykEnabled;
+    controls.autoRotate = CONFIG.autoRotate;
+    if (landingCard) {
+      landingCard.style.opacity = CONFIG.showUI ? 1 : 0;
+      landingCard.style.pointerEvents = CONFIG.showUI ? 'auto' : 'none';
+    }
   });
 
   // ============================================
@@ -210,26 +360,30 @@ function setupGUI() {
   spawnSub.add(CONFIG, 'spreadY', 3, 15, 1).name('Height').onFinishChange(resetBeans);
   spawnSub.add(CONFIG, 'depthMin', -10, 0, 0.5).name('Near').onFinishChange(resetBeans);
   spawnSub.add(CONFIG, 'depthMax', 0, 10, 0.5).name('Far').onFinishChange(resetBeans);
+  addResetButton(spawnSub, resetBeans);
 
   const entrySub = createFolder(setupFolder, 'Entry Animation');
   entrySub.add(CONFIG, 'staggerDelay', 5, 50, 1).name('Delay Between').onFinishChange(debouncedReset);
   entrySub.add(CONFIG, 'animationDuration', 200, 2000, 50).name('Pop Duration').onFinishChange(debouncedReset);
   entrySub.add(CONFIG, 'elasticAmplitude', 0.5, 3, 0.1).name('Bounce Strength').onFinishChange(debouncedReset);
   entrySub.add(CONFIG, 'elasticPeriod', 0.1, 1, 0.05).name('Bounce Speed').onFinishChange(debouncedReset);
+  addResetButton(entrySub, debouncedReset);
 
   // ============================================
   // 🫘 BEAN - Object shape and size
   // ============================================
   const beanFolder = createFolder(gui, '🫘 Bean');
 
-  const sizeSub = createFolder(beanFolder, 'Size');
+  const sizeSub = createFolder(beanFolder, 'Spawn Size Range');
   sizeSub.add(CONFIG, 'scaleMin', 0.05, 0.3, 0.01).name('Min').onFinishChange(resetBeans);
   sizeSub.add(CONFIG, 'scaleMax', 0.1, 0.6, 0.01).name('Max').onFinishChange(resetBeans);
+  addResetButton(sizeSub, resetBeans);
 
   const shapeSub = createFolder(beanFolder, 'Shape');
   shapeSub.add(CONFIG, 'beanScaleX', 0.3, 1, 0.05).name('Width').onFinishChange(rebuildGeometry);
   shapeSub.add(CONFIG, 'beanScaleY', 0.3, 1, 0.05).name('Length').onFinishChange(rebuildGeometry);
   shapeSub.add(CONFIG, 'beanScaleZ', 0.3, 1, 0.05).name('Thickness').onFinishChange(rebuildGeometry);
+  addResetButton(shapeSub, rebuildGeometry);
 
   const kidneySub = createFolder(beanFolder, 'Kidney Curve');
   kidneySub.add(CONFIG, 'kidneyAmount', 0, 0.5, 0.01).name('Amount').onFinishChange(rebuildGeometry);
@@ -237,6 +391,7 @@ function setupGUI() {
   kidneySub.add(CONFIG, 'backBulge', 0, 0.5, 0.01).name('Back Bulge').onFinishChange(rebuildGeometry);
   kidneySub.add(CONFIG, 'endPinch', 0, 0.6, 0.01).name('End Pinch').onFinishChange(rebuildGeometry);
   kidneySub.add(CONFIG, 'endPointiness', 0, 0.5, 0.01).name('Pointiness').onFinishChange(rebuildGeometry);
+  addResetButton(kidneySub, rebuildGeometry);
 
   const creaseSub = createFolder(beanFolder, 'Crease');
   creaseSub.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.001).name('Width').onChange(v => {
@@ -244,6 +399,10 @@ function setupGUI() {
   });
   creaseSub.add(CONFIG, 'creaseLength', 0.3, 0.95, 0.01).name('Length').onChange(v => {
     beanMaterial.uniforms.creaseLength.value = v;
+  });
+  addResetButton(creaseSub, () => {
+    beanMaterial.uniforms.creaseWidth.value = CONFIG.creaseWidth;
+    beanMaterial.uniforms.creaseLength.value = CONFIG.creaseLength;
   });
 
   // ============================================
@@ -264,6 +423,12 @@ function setupGUI() {
   });
   colorSub.addColor(CONFIG, 'creaseColor').name('Crease').onChange(v => {
     beanMaterial.uniforms.creaseColor.value.set(v);
+  });
+  addResetButton(colorSub, () => {
+    beanMaterial.uniforms.colorEnabled.value = CONFIG.colorEnabled ? 1.0 : 0.0;
+    beanMaterial.uniforms.baseColor.value.set(CONFIG.baseColor);
+    beanMaterial.uniforms.highlightColor.value.set(CONFIG.highlightColor);
+    beanMaterial.uniforms.creaseColor.value.set(CONFIG.creaseColor);
   });
 
   // Cel Shading subfolder
@@ -295,6 +460,17 @@ function setupGUI() {
   celSub.add(CONFIG, 'specularPower', 8, 128, 4).name('Spec Sharpness').onChange(v => {
     beanMaterial.uniforms.specularPower.value = v;
   });
+  addResetButton(celSub, () => {
+    beanMaterial.uniforms.toonEnabled.value = CONFIG.toonEnabled ? 1.0 : 0.0;
+    beanMaterial.uniforms.toonBands.value = CONFIG.toonBands;
+    beanMaterial.uniforms.rimEnabled.value = CONFIG.rimEnabled ? 1.0 : 0.0;
+    beanMaterial.uniforms.rimIntensity.value = CONFIG.rimIntensity;
+    beanMaterial.uniforms.rimPower.value = CONFIG.rimPower;
+    beanMaterial.uniforms.specularEnabled.value = CONFIG.specularEnabled ? 1.0 : 0.0;
+    beanMaterial.uniforms.specularIntensity.value = CONFIG.specularIntensity;
+    beanMaterial.uniforms.specularThreshold.value = CONFIG.specularThreshold;
+    beanMaterial.uniforms.specularPower.value = CONFIG.specularPower;
+  });
 
   // Light Direction subfolder
   const lightSub = createFolder(styleFolder, 'Light Direction');
@@ -304,6 +480,7 @@ function setupGUI() {
   lightSub.add(CONFIG, 'lightX', -1, 1, 0.1).name('X').onChange(updateLightDir);
   lightSub.add(CONFIG, 'lightY', -1, 1, 0.1).name('Y').onChange(updateLightDir);
   lightSub.add(CONFIG, 'lightZ', -1, 1, 0.1).name('Z').onChange(updateLightDir);
+  addResetButton(lightSub, updateLightDir);
 
   // CMYK Halo subfolder
   const cmykSub = createFolder(styleFolder, 'CMYK Halo');
@@ -325,6 +502,14 @@ function setupGUI() {
   cmykSub.add(CONFIG, 'cmykBreatheWaveFreq', 0.5, 5, 0.25).name('Wave Frequency').onChange(v => {
     cmykPass.uniforms.breatheWaveFreq.value = v;
   });
+  addResetButton(cmykSub, () => {
+    cmykPass.uniforms.offset.value = CONFIG.cmykOffset;
+    cmykPass.uniforms.rotationSpeed.value = CONFIG.cmykRotationSpeed;
+    cmykPass.uniforms.breatheEnabled.value = CONFIG.cmykBreatheEnabled ? 1.0 : 0.0;
+    cmykPass.uniforms.breatheIntensity.value = CONFIG.cmykBreatheIntensity;
+    cmykPass.uniforms.breatheSpeed.value = CONFIG.cmykBreatheSpeed;
+    cmykPass.uniforms.breatheWaveFreq.value = CONFIG.cmykBreatheWaveFreq;
+  });
 
   // ============================================
   // 🎬 PLAYBACK - Runtime controls
@@ -334,8 +519,9 @@ function setupGUI() {
   const motionSub = createFolder(playbackFolder, 'Motion');
   motionSub.add(CONFIG, 'driftSpeed', 0, 1, 0.01).name('Drift').onFinishChange(updateVelocities);
   motionSub.add(CONFIG, 'rotationSpeed', 0, 5, 0.1).name('Spin').onFinishChange(updateVelocities);
+  addResetButton(motionSub, updateVelocities);
 
-  // Top-level controls (always visible)
+  // Top-level playback controls (always visible)
   gui.add(CONFIG, 'paused').name('⏸ Pause');
   gui.add({ reset: resetBeans }, 'reset').name('🔄 Reset & Replay');
 }
@@ -365,6 +551,245 @@ function updateVelocities() {
     bean.userData.vrx = (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008;
     bean.userData.vry = (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008;
     bean.userData.vrz = (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008;
+  });
+}
+
+// ============================================
+// MULTI/SINGLE BEAN MODE TRANSITIONS
+// ============================================
+function transitionToSingleBean() {
+  // Disable controls during transition
+  controls.enabled = false;
+
+  // Find bean closest to screen center (project to screen space)
+  let closestBean = beans[0];
+  let closestDist = Infinity;
+
+  beans.forEach(bean => {
+    if (bean.scale.x <= 0) return; // Skip hidden beans
+    // Project bean position to normalized device coordinates
+    const projected = bean.position.clone().project(camera);
+    // Distance from screen center (0,0 in NDC)
+    const dist = Math.sqrt(projected.x * projected.x + projected.y * projected.y);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestBean = bean;
+    }
+  });
+
+  heroBean = closestBean;
+
+  // Capture hero's current position for camera target
+  const heroPos = heroBean.position.clone();
+
+  // Calculate camera position: 3 units in front of hero (towards camera)
+  const cameraTargetPos = {
+    x: heroPos.x,
+    y: heroPos.y,
+    z: heroPos.z + 3
+  };
+
+  // Normalize hero rotation for shortest path to face camera
+  const normalizeAngle = (angle) => {
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    return angle;
+  };
+  heroBean.rotation.x = normalizeAngle(heroBean.rotation.x);
+  heroBean.rotation.y = normalizeAngle(heroBean.rotation.y);
+  heroBean.rotation.z = normalizeAngle(heroBean.rotation.z);
+
+  // Turn off CMYK halo for single bean mode
+  CONFIG.cmykEnabled = false;
+  cmykPass.enabled = false;
+  if (cmykController) cmykController.updateDisplay();
+
+  // Create animation timeline
+  const tl = gsap.timeline({
+    onComplete: () => {
+      // Set controls target to hero position and enable
+      controls.target.set(heroPos.x, heroPos.y, heroPos.z);
+      controls.update();
+      controls.enabled = true;
+      // Toggle body class for CSS z-index/pointer-events
+      document.body.classList.add('single-bean-mode');
+      isTransitioning = false;
+    }
+  });
+
+  const duration = 1.4;
+
+  // Fade out landing card (respecting showUI setting)
+  if (landingCard && CONFIG.showUI) {
+    tl.to(landingCard, {
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power2.out',
+      onComplete: () => { landingCard.style.pointerEvents = 'none'; }
+    }, 0.1);
+  }
+
+  // Camera pans TO the hero position
+  tl.to(camera.position, {
+    x: cameraTargetPos.x,
+    y: cameraTargetPos.y,
+    z: cameraTargetPos.z,
+    duration: duration,
+    ease: 'expo.inOut'
+  }, 0);
+
+  // Animate controls.target to hero position (for smooth orbit pivot)
+  tl.to(controls.target, {
+    x: heroPos.x,
+    y: heroPos.y,
+    z: heroPos.z,
+    duration: duration,
+    ease: 'expo.inOut',
+    onUpdate: () => controls.update()
+  }, 0);
+
+  // Hero scales up to full size (stays in place!)
+  tl.to(heroBean.scale, {
+    x: 1, y: 1, z: 1,
+    duration: duration,
+    ease: 'power2.inOut'
+  }, 0);
+
+  // Hero rotates to face camera (upright position)
+  tl.to(heroBean.rotation, {
+    x: 0, y: 0, z: 0,
+    duration: duration,
+    ease: 'power2.inOut'
+  }, 0);
+
+  // Pop away other beans with stagger
+  const otherBeans = beans.filter(b => b !== heroBean);
+  const shuffled = otherBeans.sort(() => Math.random() - 0.5);
+  const popStart = 0.6;
+
+  shuffled.forEach((b, i) => {
+    const startScale = b.scale.x;
+    // Pop UP slightly then shrink to 0
+    tl.to(b.scale, {
+      x: startScale * 1.3,
+      y: startScale * 1.3,
+      z: startScale * 1.3,
+      duration: 0.1,
+      ease: 'power2.out'
+    }, popStart + i * 0.003);
+    tl.to(b.scale, {
+      x: 0, y: 0, z: 0,
+      duration: 0.15,
+      ease: 'back.in(2)'
+    }, popStart + i * 0.003 + 0.1);
+  });
+}
+
+function transitionToMultiBean() {
+  // Disable controls during transition
+  controls.enabled = false;
+  // Remove body class immediately so landing page is clickable as it fades in
+  document.body.classList.remove('single-bean-mode');
+
+  // Turn on CMYK halo for multi bean mode
+  CONFIG.cmykEnabled = true;
+  cmykPass.enabled = true;
+  if (cmykController) cmykController.updateDisplay();
+
+  // Create animation timeline
+  const tl = gsap.timeline({
+    onComplete: () => {
+      controls.target.set(0, 0, 0);
+      controls.update();
+      isTransitioning = false;
+    }
+  });
+
+  const duration = 1.4;
+
+  // Fade in landing card (respecting showUI setting)
+  if (landingCard && CONFIG.showUI) {
+    landingCard.style.pointerEvents = 'auto';
+    tl.to(landingCard, {
+      opacity: 1,
+      duration: 0.4,
+      ease: 'power2.in'
+    }, 0.8);
+  }
+
+  // Camera zooms out to origin
+  tl.to(camera.position, {
+    x: 0, y: 0, z: 12,
+    duration: duration,
+    ease: 'expo.inOut'
+  }, 0);
+
+  // Animate controls.target back to origin
+  tl.to(controls.target, {
+    x: 0, y: 0, z: 0,
+    duration: duration,
+    ease: 'expo.inOut',
+    onUpdate: () => controls.update()
+  }, 0);
+
+  // Shrink hero bean to multi-bean scale if it exists
+  if (heroBean) {
+    const heroTargetScale = CONFIG.scaleMin + Math.random() * (CONFIG.scaleMax - CONFIG.scaleMin);
+    heroBean.userData.targetScale = heroTargetScale;
+    heroBean.userData.vx = (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015;
+    heroBean.userData.vy = (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015;
+    heroBean.userData.vrx = (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008;
+    heroBean.userData.vry = (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008;
+    heroBean.userData.vrz = (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008;
+
+    tl.to(heroBean.scale, {
+      x: heroTargetScale,
+      y: heroTargetScale,
+      z: heroTargetScale,
+      duration: 0.6,
+      ease: 'power2.inOut'
+    }, 0);
+
+    // Move hero to random position
+    tl.to(heroBean.position, {
+      x: (Math.random() - 0.5) * CONFIG.spreadX * 2,
+      y: (Math.random() - 0.5) * CONFIG.spreadY * 2,
+      z: CONFIG.depthMin + Math.random() * (CONFIG.depthMax - CONFIG.depthMin),
+      duration: 0.8,
+      ease: 'power2.inOut'
+    }, 0);
+  }
+
+  // Pop-reveal all other beans with stagger
+  const otherBeans = beans.filter(b => b !== heroBean);
+  const shuffled = otherBeans.sort(() => Math.random() - 0.5);
+
+  shuffled.forEach((b, i) => {
+    const targetScale = b.userData.targetScale;
+    const popDelay = 0.15 + i * 0.002;
+
+    // Reset position for hidden beans
+    b.position.set(
+      (Math.random() - 0.5) * CONFIG.spreadX * 2,
+      (Math.random() - 0.5) * CONFIG.spreadY * 2,
+      CONFIG.depthMin + Math.random() * (CONFIG.depthMax - CONFIG.depthMin)
+    );
+
+    // Pop UP first (overshoot), then settle to target
+    tl.to(b.scale, {
+      x: targetScale * 1.4,
+      y: targetScale * 1.4,
+      z: targetScale * 1.4,
+      duration: 0.12,
+      ease: 'power2.out'
+    }, popDelay);
+    tl.to(b.scale, {
+      x: targetScale,
+      y: targetScale,
+      z: targetScale,
+      duration: 0.25,
+      ease: 'back.out(3)'
+    }, popDelay + 0.12);
   });
 }
 
@@ -436,7 +861,11 @@ function animate() {
   // Update CMYK time for animated glow
   cmykPass.uniforms.time.value += 0.016; // ~60fps delta
 
-  if (!CONFIG.paused) {
+  // Update OrbitControls (handles damping, auto-rotate)
+  controls.update();
+
+  // Animate beans only in multi-bean mode and not paused
+  if (!CONFIG.singleBeanMode && !CONFIG.paused) {
     beans.forEach(bean => {
       const { vx, vy, vrx, vry, vrz } = bean.userData;
 
