@@ -33,11 +33,8 @@
     /* TL;DR Box */
     .tldr-box {
       background: var(--yellow);
-      border: 2px solid var(--black);
-      border-radius: 0.75rem;
       padding: 1.5rem;
       margin-bottom: 2rem;
-      box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.25);
     }
 
     .tldr-title {
@@ -115,11 +112,7 @@
     }
 
     .recipe-card {
-      background: var(--white);
-      border: 2px solid var(--black);
-      border-radius: 0.75rem;
       overflow: hidden;
-      box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.25);
     }
 
     .recipe-card-header {
@@ -235,7 +228,7 @@
   <div class="container">
 
     <!-- TL;DR -->
-    <div class="tldr-box">
+    <div class="tldr-box card-base static">
       <div class="tldr-title">
         <i class="fa-solid fa-bolt"></i>
         TL;DR
@@ -256,7 +249,7 @@
     </h2>
 
     <div class="recipe-grid">
-      <div class="recipe-card" data-type="high">
+      <div class="recipe-card card-base static" data-type="high">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-mountain-sun"></i></span>
           <span class="recipe-card-title">High Altitude</span>
@@ -286,7 +279,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="mid">
+      <div class="recipe-card card-base static" data-type="mid">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-mountain"></i></span>
           <span class="recipe-card-title">Mid Altitude</span>
@@ -316,7 +309,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="low">
+      <div class="recipe-card card-base static" data-type="low">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-hill-rockslide"></i></span>
           <span class="recipe-card-title">Low Altitude</span>
@@ -346,7 +339,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="decaf">
+      <div class="recipe-card card-base static" data-type="decaf">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-moon"></i></span>
           <span class="recipe-card-title">Decaf (any altitude)</span>
@@ -384,7 +377,7 @@
     </h2>
 
     <div class="recipe-grid">
-      <div class="recipe-card" data-type="washed">
+      <div class="recipe-card card-base static" data-type="washed">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-droplet"></i></span>
           <span class="recipe-card-title">Washed</span>
@@ -414,7 +407,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="natural">
+      <div class="recipe-card card-base static" data-type="natural">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-sun"></i></span>
           <span class="recipe-card-title">Natural</span>
@@ -444,7 +437,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="honey">
+      <div class="recipe-card card-base static" data-type="honey">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-jar"></i></span>
           <span class="recipe-card-title">Honey / Pulped</span>
@@ -474,7 +467,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="anaerobic">
+      <div class="recipe-card card-base static" data-type="anaerobic">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-vial"></i></span>
           <span class="recipe-card-title">Anaerobic / Fermented</span>
@@ -504,7 +497,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="wethulled">
+      <div class="recipe-card card-base static" data-type="wethulled">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-water"></i></span>
           <span class="recipe-card-title">Wet-Hulled</span>
@@ -534,7 +527,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="decaf">
+      <div class="recipe-card card-base static" data-type="decaf">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-leaf"></i></span>
           <span class="recipe-card-title">Decaf (SWP/EA)</span>
@@ -572,7 +565,7 @@
     </h2>
 
     <div class="recipe-grid">
-      <div class="recipe-card" data-type="light">
+      <div class="recipe-card card-base static" data-type="light">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-regular fa-circle"></i></span>
           <span class="recipe-card-title">Light Roast</span>
@@ -602,7 +595,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="lightmed">
+      <div class="recipe-card card-base static" data-type="lightmed">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-circle-half-stroke"></i></span>
           <span class="recipe-card-title">Light-Medium</span>
@@ -632,7 +625,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="medium">
+      <div class="recipe-card card-base static" data-type="medium">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-circle"></i></span>
           <span class="recipe-card-title">Medium Roast</span>
@@ -662,7 +655,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="meddark">
+      <div class="recipe-card card-base static" data-type="meddark">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-fire-flame-simple"></i></span>
           <span class="recipe-card-title">Medium-Dark</span>
@@ -692,7 +685,7 @@
         </div>
       </div>
 
-      <div class="recipe-card" data-type="dark">
+      <div class="recipe-card card-base static" data-type="dark">
         <div class="recipe-card-header">
           <span class="recipe-card-icon"><i class="fa-solid fa-fire"></i></span>
           <span class="recipe-card-title">Dark Roast</span>
