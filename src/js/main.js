@@ -61,10 +61,8 @@ function openDialog(card) {
   const title = card.querySelector('.card-title').textContent;
   const content = card.querySelector('.card-content .card-inner').innerHTML;
 
-  // Set header color
-  const dialogColor = colorMap[color] || 'var(--white)';
-  dialogHeader.style.background = dialogColor;
-  dialogHeader.style.color = 'var(--black)';
+  // Set icon color
+  const dialogColor = colorMap[color] || 'var(--black)';
   dialog.style.setProperty('--dialog-color', dialogColor);
 
   // Populate dialog content before transition

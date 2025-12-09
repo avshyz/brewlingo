@@ -251,8 +251,7 @@ header {
     }
   }
 
-  & .card-title,
-  & .card-icon {
+  & .card-title {
     text-shadow: 0 0 0 cyan, 0 0 0 magenta;
     transition: text-shadow 0.2s ease;
   }
@@ -261,9 +260,13 @@ header {
     transform: translate(calc(var(--card-shadow-offset) * -1), calc(var(--card-shadow-offset) * -1));
     box-shadow: calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black);
 
-    & .card-title,
-    & .card-icon {
+    & .card-title {
       text-shadow: -1.5px -1.5px 0 cyan, var(--card-shadow-offset) var(--card-shadow-offset) 0 magenta;
+    }
+
+    & .card-icon {
+      filter: drop-shadow(calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black));
+      transform: translate(calc(var(--card-shadow-offset) * -1), calc(var(--card-shadow-offset) * -1));
     }
 
     & .chip,
@@ -308,32 +311,48 @@ header {
     }
   }
 
-  &[data-color="yellow"] .card-header { background: var(--yellow); }
-  &[data-color="pink"] .card-header { background: var(--pink); }
-  &[data-color="blue"] .card-header { background: var(--blue); }
-  &[data-color="orange"] .card-header { background: var(--orange); }
-  &[data-color="purple"] .card-header { background: var(--purple); }
-  &[data-color="green"] .card-header { background: var(--green); }
-  &[data-color="red"] .card-header { background: var(--red); }
-  &[data-color="cyan"] .card-header { background: var(--cyan); }
-  &[data-color="indigo"] .card-header { background: var(--indigo); }
-  &[data-color="amber"] .card-header { background: var(--amber); }
+  &[data-color="yellow"] .card-icon i { color: var(--yellow); }
+  &[data-color="yellow"]:hover .card-toggle { background: var(--yellow); }
+  &[data-color="pink"] .card-icon i { color: var(--pink); }
+  &[data-color="pink"]:hover .card-toggle { background: var(--pink); }
+  &[data-color="blue"] .card-icon i { color: var(--blue); }
+  &[data-color="blue"]:hover .card-toggle { background: var(--blue); }
+  &[data-color="orange"] .card-icon i { color: var(--orange); }
+  &[data-color="orange"]:hover .card-toggle { background: var(--orange); }
+  &[data-color="purple"] .card-icon i { color: var(--purple); }
+  &[data-color="purple"]:hover .card-toggle { background: var(--purple); }
+  &[data-color="green"] .card-icon i { color: var(--green); }
+  &[data-color="green"]:hover .card-toggle { background: var(--green); }
+  &[data-color="red"] .card-icon i { color: var(--red); }
+  &[data-color="red"]:hover .card-toggle { background: var(--red); }
+  &[data-color="cyan"] .card-icon i { color: var(--cyan); }
+  &[data-color="cyan"]:hover .card-toggle { background: var(--cyan); }
+  &[data-color="indigo"] .card-icon i { color: var(--indigo); }
+  &[data-color="indigo"]:hover .card-toggle { background: var(--indigo); }
+  &[data-color="amber"] .card-icon i { color: var(--amber); }
+  &[data-color="amber"]:hover .card-toggle { background: var(--amber); }
 }
 
 .card-header {
-  padding: 1rem 1.25rem;
+  padding: 1rem 1.25rem 0;
   position: relative;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border-bottom: var(--border);
   user-select: none;
   width: 100%; /* Fix Safari flexbox inside button */
 }
 
 .card-icon {
-  font-size: 1.3rem;
   flex-shrink: 0;
+  filter: drop-shadow(var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black));
+  transition: filter 0.2s ease, transform 0.2s ease;
+
+  & i {
+    font-size: 2rem;
+    -webkit-text-stroke: 2px var(--black);
+    paint-order: stroke fill;
+  }
 }
 
 .card-title {
@@ -358,7 +377,7 @@ header {
   font-size: 1.2rem;
   flex-shrink: 0;
   color: var(--black);
-  transition: box-shadow 0.2s ease-in-out;
+  transition: box-shadow 0.2s ease-in-out, background 0.2s ease;
 }
 
 .card-preview {
@@ -530,15 +549,20 @@ dialog {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border-bottom: var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
+  background: var(--dialog-color, var(--white));
+  border-bottom: var(--border);
 }
 
 .dialog-icon {
-  font-size: 1.3rem;
   flex-shrink: 0;
+
+  & i {
+    font-size: 2rem;
+    color: var(--black);
+  }
 }
 
 .dialog-title {
@@ -548,6 +572,7 @@ dialog {
   text-transform: uppercase;
   letter-spacing: -0.5px;
   flex-grow: 1;
+  color: var(--black);
 }
 
 .dialog-close {

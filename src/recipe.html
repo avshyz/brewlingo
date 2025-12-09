@@ -122,26 +122,32 @@
     }
 
     .recipe-card-header {
-      padding: 0.75rem 1rem;
-      border-bottom: 2px solid var(--black);
+      padding: 1rem 1.25rem 0;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
 
-    .recipe-card-header i {
-      font-size: 1rem;
+    .recipe-card-icon {
+      flex-shrink: 0;
+      filter: drop-shadow(var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black));
+    }
+
+    .recipe-card-icon i {
+      font-size: 2rem;
+      -webkit-text-stroke: 2px var(--black);
+      paint-order: stroke fill;
     }
 
     .recipe-card-title {
       font-family: 'Archivo Black', sans-serif;
-      font-size: 0.95rem;
+      font-size: 1.3rem;
       text-transform: uppercase;
       letter-spacing: -0.5px;
     }
 
     .recipe-card-body {
-      padding: 1rem;
+      padding: 1rem 1.25rem;
     }
 
     /* Parameters Row - chip style */
@@ -183,22 +189,21 @@
       opacity: 0.85;
     }
 
-    /* Color coding for card headers */
-    .recipe-card[data-type="high"] .recipe-card-header { background: var(--red); }
-    .recipe-card[data-type="mid"] .recipe-card-header { background: var(--orange); }
-    .recipe-card[data-type="low"] .recipe-card-header { background: var(--green); }
-    .recipe-card[data-type="decaf"] .recipe-card-header { background: var(--purple); }
-    .recipe-card[data-type="washed"] .recipe-card-header { background: var(--cyan); }
-    .recipe-card[data-type="natural"] .recipe-card-header { background: var(--pink); }
-    .recipe-card[data-type="honey"] .recipe-card-header { background: var(--amber); }
-    .recipe-card[data-type="anaerobic"] .recipe-card-header { background: var(--indigo); }
-    .recipe-card[data-type="wethulled"] .recipe-card-header { background: var(--blue); }
-    .recipe-card[data-type="light"] .recipe-card-header { background: #fef9c3; }
-    .recipe-card[data-type="lightmed"] .recipe-card-header { background: #fde68a; }
-    .recipe-card[data-type="medium"] .recipe-card-header { background: var(--amber); }
-    .recipe-card[data-type="meddark"] .recipe-card-header { background: var(--orange); }
-    .recipe-card[data-type="dark"] .recipe-card-header { background: #78350f; color: var(--white); }
-    .recipe-card[data-type="dark"] .recipe-card-header i { color: var(--white); }
+    /* Color coding for card icons */
+    .recipe-card[data-type="high"] .recipe-card-icon i { color: var(--red); }
+    .recipe-card[data-type="mid"] .recipe-card-icon i { color: var(--orange); }
+    .recipe-card[data-type="low"] .recipe-card-icon i { color: var(--green); }
+    .recipe-card[data-type="decaf"] .recipe-card-icon i { color: var(--purple); }
+    .recipe-card[data-type="washed"] .recipe-card-icon i { color: var(--cyan); }
+    .recipe-card[data-type="natural"] .recipe-card-icon i { color: var(--pink); }
+    .recipe-card[data-type="honey"] .recipe-card-icon i { color: var(--amber); }
+    .recipe-card[data-type="anaerobic"] .recipe-card-icon i { color: var(--indigo); }
+    .recipe-card[data-type="wethulled"] .recipe-card-icon i { color: var(--blue); }
+    .recipe-card[data-type="light"] .recipe-card-icon i { color: #fef9c3; }
+    .recipe-card[data-type="lightmed"] .recipe-card-icon i { color: #fde68a; }
+    .recipe-card[data-type="medium"] .recipe-card-icon i { color: var(--amber); }
+    .recipe-card[data-type="meddark"] .recipe-card-icon i { color: var(--orange); }
+    .recipe-card[data-type="dark"] .recipe-card-icon i { color: #78350f; }
   </style>
 </head>
 <body>
@@ -252,7 +257,7 @@
     <div class="recipe-grid">
       <div class="recipe-card" data-type="high">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-mountain-sun"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-mountain-sun"></i></span>
           <span class="recipe-card-title">High Altitude</span>
         </div>
         <div class="recipe-card-body">
@@ -282,7 +287,7 @@
 
       <div class="recipe-card" data-type="mid">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-mountain"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-mountain"></i></span>
           <span class="recipe-card-title">Mid Altitude</span>
         </div>
         <div class="recipe-card-body">
@@ -312,7 +317,7 @@
 
       <div class="recipe-card" data-type="low">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-hill-rockslide"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-hill-rockslide"></i></span>
           <span class="recipe-card-title">Low Altitude</span>
         </div>
         <div class="recipe-card-body">
@@ -342,7 +347,7 @@
 
       <div class="recipe-card" data-type="decaf">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-moon"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-moon"></i></span>
           <span class="recipe-card-title">Decaf (any altitude)</span>
         </div>
         <div class="recipe-card-body">
@@ -380,7 +385,7 @@
     <div class="recipe-grid">
       <div class="recipe-card" data-type="washed">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-droplet"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-droplet"></i></span>
           <span class="recipe-card-title">Washed</span>
         </div>
         <div class="recipe-card-body">
@@ -410,7 +415,7 @@
 
       <div class="recipe-card" data-type="natural">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-sun"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-sun"></i></span>
           <span class="recipe-card-title">Natural</span>
         </div>
         <div class="recipe-card-body">
@@ -440,7 +445,7 @@
 
       <div class="recipe-card" data-type="honey">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-jar"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-jar"></i></span>
           <span class="recipe-card-title">Honey / Pulped</span>
         </div>
         <div class="recipe-card-body">
@@ -470,7 +475,7 @@
 
       <div class="recipe-card" data-type="anaerobic">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-vial"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-vial"></i></span>
           <span class="recipe-card-title">Anaerobic / Fermented</span>
         </div>
         <div class="recipe-card-body">
@@ -500,7 +505,7 @@
 
       <div class="recipe-card" data-type="wethulled">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-water"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-water"></i></span>
           <span class="recipe-card-title">Wet-Hulled</span>
         </div>
         <div class="recipe-card-body">
@@ -530,7 +535,7 @@
 
       <div class="recipe-card" data-type="decaf">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-leaf"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-leaf"></i></span>
           <span class="recipe-card-title">Decaf (SWP/EA)</span>
         </div>
         <div class="recipe-card-body">
@@ -568,7 +573,7 @@
     <div class="recipe-grid">
       <div class="recipe-card" data-type="light">
         <div class="recipe-card-header">
-          <i class="fa-regular fa-circle"></i>
+          <span class="recipe-card-icon"><i class="fa-regular fa-circle"></i></span>
           <span class="recipe-card-title">Light Roast</span>
         </div>
         <div class="recipe-card-body">
@@ -598,7 +603,7 @@
 
       <div class="recipe-card" data-type="lightmed">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-circle-half-stroke"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-circle-half-stroke"></i></span>
           <span class="recipe-card-title">Light-Medium</span>
         </div>
         <div class="recipe-card-body">
@@ -628,7 +633,7 @@
 
       <div class="recipe-card" data-type="medium">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-circle"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-circle"></i></span>
           <span class="recipe-card-title">Medium Roast</span>
         </div>
         <div class="recipe-card-body">
@@ -658,7 +663,7 @@
 
       <div class="recipe-card" data-type="meddark">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-fire-flame-simple"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-fire-flame-simple"></i></span>
           <span class="recipe-card-title">Medium-Dark</span>
         </div>
         <div class="recipe-card-body">
@@ -688,7 +693,7 @@
 
       <div class="recipe-card" data-type="dark">
         <div class="recipe-card-header">
-          <i class="fa-solid fa-fire"></i>
+          <span class="recipe-card-icon"><i class="fa-solid fa-fire"></i></span>
           <span class="recipe-card-title">Dark Roast</span>
         </div>
         <div class="recipe-card-body">
