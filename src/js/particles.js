@@ -46,7 +46,25 @@ const CONFIG = {
   // Collision settings
   collisionEnabled: true,
   collisionDamping: 0.8,
-  collisionRadiusMultiplier: 0.5
+  collisionRadiusMultiplier: 0.5,
+  // Cel-shading settings
+  toonEnabled: false,
+  rimEnabled: false,
+  specularEnabled: true,
+  rimPower: 2.0,
+  rimIntensity: 0.6,
+  toonBands: 3,
+  specularPower: 64.0,
+  specularThreshold: 0.5,
+  specularIntensity: 0.8,
+  lightX: 0.5,
+  lightY: 1.0,
+  lightZ: 0.3,
+  // Bean colors
+  colorEnabled: false,
+  baseColor: '#C4A484',      // Light roasted coffee
+  highlightColor: '#E8DCC4', // Warm cream highlight
+  creaseColor: '#E5D9C3'     // Light brown-beige crease
 };
 
 // ============================================
@@ -233,34 +251,126 @@ function smoothstep(edge0, edge1, x) {
 const BeanShader = {
   uniforms: {
     creaseWidth: { value: CONFIG.creaseWidth },
-    creaseLength: { value: CONFIG.creaseLength }
+    creaseLength: { value: CONFIG.creaseLength },
+    // Cel-shading uniforms
+    lightDir: { value: new THREE.Vector3(0.5, 1.0, 0.3).normalize() },
+    colorEnabled: { value: 0.0 },
+    toonEnabled: { value: 0.0 },
+    rimEnabled: { value: 0.0 },
+    specularEnabled: { value: 1.0 },
+    rimPower: { value: 2.0 },
+    rimIntensity: { value: 0.6 },
+    toonBands: { value: 3.0 },
+    specularPower: { value: 64.0 },
+    specularThreshold: { value: 0.5 },
+    specularIntensity: { value: 0.8 },
+    baseColor: { value: new THREE.Color(0xC4A484) },      // Light roasted coffee
+    highlightColor: { value: new THREE.Color(0xE8DCC4) }, // Warm cream highlight
+    creaseColor: { value: new THREE.Color(0xE5D9C3) }     // Light brown-beige crease
   },
   vertexShader: `
     attribute vec2 aUvParams;
     varying vec3 vPosition;
     varying vec2 vUvParams;
+    varying vec3 vNormal;
+    varying vec3 vViewDir;
 
     void main() {
       vPosition = position;
       vUvParams = aUvParams;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+
+      // Transform normal to view space for lighting
+      vNormal = normalize(normalMatrix * normal);
+
+      // Calculate view direction (camera looks down -Z in view space)
+      vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+      vViewDir = normalize(-mvPosition.xyz);
+
+      gl_Position = projectionMatrix * mvPosition;
     }
   `,
   fragmentShader: `
     uniform float creaseWidth;
     uniform float creaseLength;
+    uniform vec3 lightDir;
+    uniform float colorEnabled;
+    uniform float toonEnabled;
+    uniform float rimEnabled;
+    uniform float specularEnabled;
+    uniform float rimPower;
+    uniform float rimIntensity;
+    uniform float toonBands;
+    uniform float specularPower;
+    uniform float specularThreshold;
+    uniform float specularIntensity;
+    uniform vec3 baseColor;
+    uniform vec3 highlightColor;
+    uniform vec3 creaseColor;
+
     varying vec3 vPosition;
     varying vec2 vUvParams;
+    varying vec3 vNormal;
+    varying vec3 vViewDir;
 
     void main() {
-      // Pure black base
-      vec3 color = vec3(0.0);
+      vec3 normal = normalize(vNormal);
+      vec3 viewDir = normalize(vViewDir);
 
-      // Calculate crease from parametric coords
+      // Get effective colors based on colorEnabled toggle
+      vec3 effBaseColor = colorEnabled > 0.5 ? baseColor : vec3(0.0);       // Black when disabled
+      vec3 effHighlightColor = colorEnabled > 0.5 ? highlightColor : vec3(1.0); // White when disabled
+      vec3 effCreaseColor = colorEnabled > 0.5 ? creaseColor : vec3(1.0);   // White when disabled
+
+      // ================================
+      // 1. QUANTIZED TOON LIGHTING (or flat base color)
+      // ================================
+      vec3 color;
+      if (toonEnabled > 0.5) {
+        // Transform light direction to view space for consistency
+        vec3 lightDirView = normalize((viewMatrix * vec4(lightDir, 0.0)).xyz);
+        float NdotL = dot(normal, lightDirView);
+
+        // Remap from [-1, 1] to [0, 1] and quantize into bands
+        float lightIntensity = (NdotL + 1.0) * 0.5;
+        float toon = floor(lightIntensity * toonBands) / toonBands;
+
+        // Create base color with toon shading - blend from darker to lighter
+        vec3 darkBase = effBaseColor * 0.6;  // Shadow tone
+        color = mix(darkBase, effBaseColor, toon);
+      } else {
+        // Flat base color (old look)
+        color = effBaseColor;
+      }
+
+      // ================================
+      // 2. RIM LIGHTING (Fresnel)
+      // ================================
+      if (rimEnabled > 0.5) {
+        float fresnel = 1.0 - max(dot(normal, viewDir), 0.0);
+        fresnel = pow(fresnel, rimPower);
+        vec3 rimColor = effHighlightColor * fresnel * rimIntensity;
+        color = color + rimColor;
+      }
+
+      // ================================
+      // 3. SPECULAR HIGHLIGHT (Anime-style)
+      // ================================
+      if (specularEnabled > 0.5) {
+        vec3 lightDirView = normalize((viewMatrix * vec4(lightDir, 0.0)).xyz);
+        vec3 halfVec = normalize(lightDirView + viewDir);
+        float spec = pow(max(dot(normal, halfVec), 0.0), specularPower);
+        // Hard cutoff for cel-shaded look
+        spec = step(specularThreshold, spec) * specularIntensity;
+        vec3 specColor = effHighlightColor * spec;
+        color = color + specColor;
+      }
+
+      // ================================
+      // 4. CREASE LINE
+      // ================================
       float u = vUvParams.x;
       float v = vUvParams.y;
 
-      // Crisp crease with 90deg square ends
       float inWidth = step(abs(u), creaseWidth);
       float inLength = step(abs(v), creaseLength);
       float creaseLine = inWidth * inLength;
@@ -268,8 +378,14 @@ const BeanShader = {
       // Only show crease on front face (positive Z)
       creaseLine *= step(0.0, vPosition.z);
 
-      // Mix black and white
-      color = mix(color, vec3(1.0), creaseLine);
+      // ================================
+      // COMBINE ALL EFFECTS
+      // ================================
+      // Crease line on top
+      color = mix(color, effCreaseColor, creaseLine);
+
+      // Clamp to prevent over-brightening
+      color = clamp(color, 0.0, 1.0);
 
       gl_FragColor = vec4(color, 1.0);
     }
@@ -408,59 +524,137 @@ function setupGUI() {
     saveGuiState(current);
   });
 
-  const beansFolder = createFolder(gui, 'Beans');
-  beansFolder.add(CONFIG, 'beanCount', 10, 300, 1).name('Count').onFinishChange(resetBeans);
-  beansFolder.add(CONFIG, 'scaleMin', 0.05, 0.3, 0.01).name('Scale Min').onFinishChange(resetBeans);
-  beansFolder.add(CONFIG, 'scaleMax', 0.1, 0.6, 0.01).name('Scale Max').onFinishChange(resetBeans);
-  beansFolder.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.001).name('Crease Width').onChange(v => {
+  // ============================================
+  // ⚙️ SETUP - Scene configuration
+  // ============================================
+  const setupFolder = createFolder(gui, '⚙️ Setup');
+
+  const spawnSub = createFolder(setupFolder, 'Spawn Area');
+  spawnSub.add(CONFIG, 'beanCount', 10, 300, 1).name('Bean Count').onFinishChange(resetBeans);
+  spawnSub.add(CONFIG, 'spreadX', 5, 25, 1).name('Width').onFinishChange(resetBeans);
+  spawnSub.add(CONFIG, 'spreadY', 3, 15, 1).name('Height').onFinishChange(resetBeans);
+  spawnSub.add(CONFIG, 'depthMin', -10, 0, 0.5).name('Near').onFinishChange(resetBeans);
+  spawnSub.add(CONFIG, 'depthMax', 0, 10, 0.5).name('Far').onFinishChange(resetBeans);
+
+  const entrySub = createFolder(setupFolder, 'Entry Animation');
+  entrySub.add(CONFIG, 'staggerDelay', 5, 50, 1).name('Delay Between').onFinishChange(debouncedReset);
+  entrySub.add(CONFIG, 'animationDuration', 200, 2000, 50).name('Pop Duration').onFinishChange(debouncedReset);
+  entrySub.add(CONFIG, 'elasticAmplitude', 0.5, 3, 0.1).name('Bounce Strength').onFinishChange(debouncedReset);
+  entrySub.add(CONFIG, 'elasticPeriod', 0.1, 1, 0.05).name('Bounce Speed').onFinishChange(debouncedReset);
+
+  // ============================================
+  // 🫘 BEAN - Object shape and size
+  // ============================================
+  const beanFolder = createFolder(gui, '🫘 Bean');
+
+  const sizeSub = createFolder(beanFolder, 'Size');
+  sizeSub.add(CONFIG, 'scaleMin', 0.05, 0.3, 0.01).name('Min').onFinishChange(resetBeans);
+  sizeSub.add(CONFIG, 'scaleMax', 0.1, 0.6, 0.01).name('Max').onFinishChange(resetBeans);
+
+  const shapeSub = createFolder(beanFolder, 'Shape');
+  shapeSub.add(CONFIG, 'beanScaleX', 0.3, 1, 0.05).name('Width').onFinishChange(rebuildGeometry);
+  shapeSub.add(CONFIG, 'beanScaleY', 0.3, 1, 0.05).name('Length').onFinishChange(rebuildGeometry);
+  shapeSub.add(CONFIG, 'beanScaleZ', 0.3, 1, 0.05).name('Thickness').onFinishChange(rebuildGeometry);
+
+  const creaseSub = createFolder(beanFolder, 'Crease');
+  creaseSub.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.001).name('Width').onChange(v => {
     beanMaterial.uniforms.creaseWidth.value = v;
   });
-  beansFolder.add(CONFIG, 'creaseLength', 0.3, 0.95, 0.01).name('Crease Length').onChange(v => {
+  creaseSub.add(CONFIG, 'creaseLength', 0.3, 0.95, 0.01).name('Length').onChange(v => {
     beanMaterial.uniforms.creaseLength.value = v;
   });
 
-  const shapeFolder = createFolder(gui, 'Bean Shape');
-  shapeFolder.add(CONFIG, 'beanScaleX', 0.3, 1, 0.05).name('Width').onFinishChange(rebuildGeometry);
-  shapeFolder.add(CONFIG, 'beanScaleY', 0.3, 1, 0.05).name('Length').onFinishChange(rebuildGeometry);
-  shapeFolder.add(CONFIG, 'beanScaleZ', 0.3, 1, 0.05).name('Thickness').onFinishChange(rebuildGeometry);
+  // ============================================
+  // 🎨 STYLE - Visual appearance
+  // ============================================
+  const styleFolder = createFolder(gui, '🎨 Style');
 
-  const moveFolder = createFolder(gui, 'Movement');
-  moveFolder.add(CONFIG, 'driftSpeed', 0, 1, 0.01).name('Drift Speed').onFinishChange(updateVelocities);
-  moveFolder.add(CONFIG, 'rotationSpeed', 0, 5, 0.1).name('Spin Speed').onFinishChange(updateVelocities);
-  moveFolder.add(CONFIG, 'paused').name('⏸ Pause');
+  // Colors subfolder
+  const colorSub = createFolder(styleFolder, 'Colors');
+  colorSub.add(CONFIG, 'colorEnabled').name('Enable').onChange(v => {
+    beanMaterial.uniforms.colorEnabled.value = v ? 1.0 : 0.0;
+  });
+  colorSub.addColor(CONFIG, 'baseColor').name('Bean').onChange(v => {
+    beanMaterial.uniforms.baseColor.value.set(v);
+  });
+  colorSub.addColor(CONFIG, 'highlightColor').name('Highlight').onChange(v => {
+    beanMaterial.uniforms.highlightColor.value.set(v);
+  });
+  colorSub.addColor(CONFIG, 'creaseColor').name('Crease').onChange(v => {
+    beanMaterial.uniforms.creaseColor.value.set(v);
+  });
 
-  const spreadFolder = createFolder(gui, 'Spread');
-  spreadFolder.add(CONFIG, 'spreadX', 5, 25, 1).name('Spread X').onFinishChange(resetBeans);
-  spreadFolder.add(CONFIG, 'spreadY', 3, 15, 1).name('Spread Y').onFinishChange(resetBeans);
-  spreadFolder.add(CONFIG, 'depthMin', -10, 0, 0.5).name('Depth Min').onFinishChange(resetBeans);
-  spreadFolder.add(CONFIG, 'depthMax', 0, 10, 0.5).name('Depth Max').onFinishChange(resetBeans);
+  // Cel Shading subfolder
+  const celSub = createFolder(styleFolder, 'Cel Shading');
+  celSub.add(CONFIG, 'toonEnabled').name('☀ Toon').onChange(v => {
+    beanMaterial.uniforms.toonEnabled.value = v ? 1.0 : 0.0;
+  });
+  celSub.add(CONFIG, 'toonBands', 1, 6, 1).name('Bands').onChange(v => {
+    beanMaterial.uniforms.toonBands.value = v;
+  });
+  celSub.add(CONFIG, 'rimEnabled').name('✨ Rim').onChange(v => {
+    beanMaterial.uniforms.rimEnabled.value = v ? 1.0 : 0.0;
+  });
+  celSub.add(CONFIG, 'rimIntensity', 0, 1.5, 0.05).name('Rim Intensity').onChange(v => {
+    beanMaterial.uniforms.rimIntensity.value = v;
+  });
+  celSub.add(CONFIG, 'rimPower', 0.5, 5, 0.1).name('Rim Sharpness').onChange(v => {
+    beanMaterial.uniforms.rimPower.value = v;
+  });
+  celSub.add(CONFIG, 'specularEnabled').name('💫 Specular').onChange(v => {
+    beanMaterial.uniforms.specularEnabled.value = v ? 1.0 : 0.0;
+  });
+  celSub.add(CONFIG, 'specularIntensity', 0, 1.5, 0.05).name('Spec Intensity').onChange(v => {
+    beanMaterial.uniforms.specularIntensity.value = v;
+  });
+  celSub.add(CONFIG, 'specularThreshold', 0.1, 0.9, 0.05).name('Spec Threshold').onChange(v => {
+    beanMaterial.uniforms.specularThreshold.value = v;
+  });
+  celSub.add(CONFIG, 'specularPower', 8, 128, 4).name('Spec Sharpness').onChange(v => {
+    beanMaterial.uniforms.specularPower.value = v;
+  });
 
-  const cmykFolder = createFolder(gui, 'CMYK Halo');
-  cmykFolder.add(CONFIG, 'cmykOffset', 0.001, 0.015, 0.0005).name('Offset').onChange(v => {
+  // Light Direction subfolder
+  const lightSub = createFolder(styleFolder, 'Light Direction');
+  const updateLightDir = () => {
+    beanMaterial.uniforms.lightDir.value.set(CONFIG.lightX, CONFIG.lightY, CONFIG.lightZ).normalize();
+  };
+  lightSub.add(CONFIG, 'lightX', -1, 1, 0.1).name('X').onChange(updateLightDir);
+  lightSub.add(CONFIG, 'lightY', -1, 1, 0.1).name('Y').onChange(updateLightDir);
+  lightSub.add(CONFIG, 'lightZ', -1, 1, 0.1).name('Z').onChange(updateLightDir);
+
+  // CMYK Halo subfolder
+  const cmykSub = createFolder(styleFolder, 'CMYK Halo');
+  cmykSub.add(CONFIG, 'cmykOffset', 0.001, 0.015, 0.0005).name('Offset').onChange(v => {
     cmykPass.uniforms.offset.value = v;
   });
-  cmykFolder.add(CONFIG, 'cmykBreatheEnabled').name('Breathe').onChange(v => {
-    cmykPass.uniforms.breatheEnabled.value = v ? 1.0 : 0.0;
-  });
-  cmykFolder.add(CONFIG, 'cmykBreatheIntensity', 0, 1, 0.05).name('Breathe Amt').onChange(v => {
-    cmykPass.uniforms.breatheIntensity.value = v;
-  });
-  cmykFolder.add(CONFIG, 'cmykBreatheSpeed', 0, 3, 0.1).name('Breathe Speed').onChange(v => {
-    cmykPass.uniforms.breatheSpeed.value = v;
-  });
-  cmykFolder.add(CONFIG, 'cmykBreatheWaveFreq', 0.5, 5, 0.25).name('Wave Freq').onChange(v => {
-    cmykPass.uniforms.breatheWaveFreq.value = v;
-  });
-  cmykFolder.add(CONFIG, 'cmykRotationSpeed', 0, 2, 0.05).name('Rotation Speed').onChange(v => {
+  cmykSub.add(CONFIG, 'cmykRotationSpeed', 0, 2, 0.05).name('Rotation').onChange(v => {
     cmykPass.uniforms.rotationSpeed.value = v;
   });
+  cmykSub.add(CONFIG, 'cmykBreatheEnabled').name('Breathe').onChange(v => {
+    cmykPass.uniforms.breatheEnabled.value = v ? 1.0 : 0.0;
+  });
+  cmykSub.add(CONFIG, 'cmykBreatheIntensity', 0, 1, 0.05).name('Breathe Amount').onChange(v => {
+    cmykPass.uniforms.breatheIntensity.value = v;
+  });
+  cmykSub.add(CONFIG, 'cmykBreatheSpeed', 0, 3, 0.1).name('Breathe Speed').onChange(v => {
+    cmykPass.uniforms.breatheSpeed.value = v;
+  });
+  cmykSub.add(CONFIG, 'cmykBreatheWaveFreq', 0.5, 5, 0.25).name('Wave Frequency').onChange(v => {
+    cmykPass.uniforms.breatheWaveFreq.value = v;
+  });
 
-  const animFolder = createFolder(gui, 'Animation');
-  animFolder.add(CONFIG, 'staggerDelay', 5, 50, 1).name('Stagger (ms)').onFinishChange(debouncedReset);
-  animFolder.add(CONFIG, 'animationDuration', 200, 2000, 50).name('Duration (ms)').onFinishChange(debouncedReset);
-  animFolder.add(CONFIG, 'elasticAmplitude', 0.5, 3, 0.1).name('Amplitude').onFinishChange(debouncedReset);
-  animFolder.add(CONFIG, 'elasticPeriod', 0.1, 1, 0.05).name('Period').onFinishChange(debouncedReset);
+  // ============================================
+  // 🎬 PLAYBACK - Runtime controls
+  // ============================================
+  const playbackFolder = createFolder(gui, '🎬 Playback');
 
+  const motionSub = createFolder(playbackFolder, 'Motion');
+  motionSub.add(CONFIG, 'driftSpeed', 0, 1, 0.01).name('Drift').onFinishChange(updateVelocities);
+  motionSub.add(CONFIG, 'rotationSpeed', 0, 5, 0.1).name('Spin').onFinishChange(updateVelocities);
+
+  // Top-level controls (always visible)
+  gui.add(CONFIG, 'paused').name('⏸ Pause');
   gui.add({ reset: resetBeans }, 'reset').name('🔄 Reset & Replay');
 }
 
