@@ -5,13 +5,17 @@ import { fileURLToPath } from 'url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
+  root: 'src',
   base: '/brewlingo/',
+  publicDir: '../public',
   build: {
+    outDir: '../dist',
+    emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        language: resolve(__dirname, 'language.html'),
-        recipe: resolve(__dirname, 'recipe.html'),
+        main: resolve(__dirname, 'src/index.html'),
+        language: resolve(__dirname, 'src/language.html'),
+        recipe: resolve(__dirname, 'src/recipe.html'),
       },
     },
   },
