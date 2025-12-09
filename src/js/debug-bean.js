@@ -448,30 +448,40 @@ function transitionToMultiBean() {
     ease: 'power2.inOut'
   }, 0);
 
-  // Zoom camera out to multi-view
+  // Zoom camera out to multi-view with dramatic easing
   tl.to(camera.position, {
     x: 0, y: 0, z: 12,
-    duration: 0.8,
-    ease: 'power2.inOut'
+    duration: 1.4,
+    ease: 'expo.inOut'
   }, 0);
 
   tl.to(controls.target, {
     x: 0, y: 0, z: 0,
-    duration: 0.8,
-    ease: 'power2.inOut',
+    duration: 1.4,
+    ease: 'expo.inOut',
     onUpdate: () => controls.update()
   }, 0);
 
-  // Staggered reveal of multi-beans alongside hero (fast stagger)
+  // Staggered reveal of multi-beans with poppy entrance
   const shuffled = [...multiBeans].sort(() => Math.random() - 0.5);
   shuffled.forEach((b, i) => {
+    const targetScale = b.userData.targetScale;
+    const popDelay = 0.15 + i * 0.002;
+    // Pop UP first (overshoot), then settle to target
     tl.to(b.scale, {
-      x: b.userData.targetScale,
-      y: b.userData.targetScale,
-      z: b.userData.targetScale,
-      duration: 0.4,
-      ease: 'elastic.out(1, 0.5)'
-    }, 0.15 + i * 0.002);
+      x: targetScale * 1.4,
+      y: targetScale * 1.4,
+      z: targetScale * 1.4,
+      duration: 0.12,
+      ease: 'power2.out'
+    }, popDelay);
+    tl.to(b.scale, {
+      x: targetScale,
+      y: targetScale,
+      z: targetScale,
+      duration: 0.25,
+      ease: 'back.out(3)'
+    }, popDelay + 0.12);
   });
 }
 
@@ -507,32 +517,20 @@ function transitionToSingleBean() {
     }
   });
 
-  // Shrink other beans quickly
-  const shuffled = [...multiBeans].sort(() => Math.random() - 0.5);
-  shuffled.forEach((b, i) => {
-    tl.to(b.scale, {
-      x: 0, y: 0, z: 0,
-      duration: 0.3,
-      ease: 'power2.in'
-    }, i * 0.002);
-  });
+  // Hero animation duration
+  const duration = 1.5;
 
-  // All animations happen simultaneously:
-  // - Camera zooms from current position to final position (passing through hero's area)
-  // - Hero scales up, moves to center, and rotates to face camera
-  const duration = 1.2;
-
-  // Camera moves directly to final position
+  // Camera moves directly to final position with dramatic easing
   tl.to(camera.position, {
     x: 0.25, y: 0, z: 3,
     duration: duration,
-    ease: 'power2.inOut'
+    ease: 'expo.inOut'
   }, 0);
 
   tl.to(controls.target, {
     x: 0.25, y: 0, z: 0,
     duration: duration,
-    ease: 'power2.inOut',
+    ease: 'expo.inOut',
     onUpdate: () => controls.update()
   }, 0);
 
@@ -556,6 +554,26 @@ function transitionToSingleBean() {
     duration: duration,
     ease: 'power2.inOut'
   }, 0);
+
+  // Pop away other beans AFTER hero animation is mostly done
+  const popStart = 1.0;
+  const shuffled = [...multiBeans].sort(() => Math.random() - 0.5);
+  shuffled.forEach((b, i) => {
+    // First pop UP slightly, then shrink to 0
+    const startScale = b.scale.x;
+    tl.to(b.scale, {
+      x: startScale * 1.3,
+      y: startScale * 1.3,
+      z: startScale * 1.3,
+      duration: 0.1,
+      ease: 'power2.out'
+    }, popStart + i * 0.003);
+    tl.to(b.scale, {
+      x: 0, y: 0, z: 0,
+      duration: 0.15,
+      ease: 'back.in(2)'
+    }, popStart + i * 0.003 + 0.1);
+  });
 }
 
 function createMultiBeans(startHidden = false) {
