@@ -308,20 +308,16 @@ function init() {
     antialias: true
   });
   const pixelRatio = Math.min(window.devicePixelRatio, 3);
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
   renderer.setSize(width, height);
   renderer.setPixelRatio(pixelRatio);
   renderer.setClearColor(0x000000, 0);
 
   // Post-processing for CMYK halo effect
-  const renderTarget = new THREE.WebGLRenderTarget(
-    width * pixelRatio,
-    height * pixelRatio,
-    { format: THREE.RGBAFormat, stencilBuffer: false }
-  );
-
-  composer = new EffectComposer(renderer, renderTarget);
+  // Let EffectComposer create and manage its own render targets
+  // This ensures setSize() works correctly on window resize
+  composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
 
   cmykPass = new ShaderPass(CMYKShader);
@@ -589,16 +585,40 @@ function animate() {
 // ============================================
 // RESIZE
 // ============================================
+let resizeTimeout = null;
+
 function handleResize() {
-  const canvas = document.getElementById('particle-canvas');
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
+  // Debounce resize events for performance
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(performResize, 50);
+}
+
+function performResize() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  // Skip if dimensions are invalid or globals not ready
+  if (width === 0 || height === 0 || !renderer || !camera || !composer) return;
+
   const pixelRatio = Math.min(window.devicePixelRatio, 3);
+
+  // Update camera
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
+
+  // Update renderer - setPixelRatio must come before setSize
   renderer.setPixelRatio(pixelRatio);
-  composer.setSize(width * pixelRatio, height * pixelRatio);
+  renderer.setSize(width, height);
+
+  // Update composer - use display size, not pixel-scaled size
+  // EffectComposer handles pixelRatio internally via renderer.getPixelRatio()
+  composer.setSize(width, height);
+
+  // Adjust spread based on aspect ratio to maintain visual density
+  const baseAspect = 16 / 9;
+  const currentAspect = width / height;
+  const aspectRatio = currentAspect / baseAspect;
+  CONFIG.spreadX = 12 * Math.max(0.8, Math.min(1.5, aspectRatio));
 }
 
 // ============================================
