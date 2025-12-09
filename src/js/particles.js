@@ -16,7 +16,7 @@ const isMobile = window.innerWidth <= 640;
 const isDebug = new URLSearchParams(window.location.search).get('d') === '1';
 
 const CONFIG = {
-  beanCount: isMobile ? 180 : 200,
+  beanCount: 200,
   driftSpeed: 0.5,
   rotationSpeed: 3,
   scaleMin: 0.05,
@@ -61,7 +61,8 @@ const CMYKShader = {
     breatheIntensity: { value: CONFIG.cmykBreatheIntensity },
     breatheSpeed: { value: CONFIG.cmykBreatheSpeed },
     breatheWaveFreq: { value: CONFIG.cmykBreatheWaveFreq },
-    rotationSpeed: { value: CONFIG.cmykRotationSpeed }
+    rotationSpeed: { value: CONFIG.cmykRotationSpeed },
+    verticalWave: { value: isMobile ? 1.0 : 0.0 }
   },
   vertexShader: `
     varying vec2 vUv;
@@ -79,6 +80,7 @@ const CMYKShader = {
     uniform float breatheSpeed;
     uniform float breatheWaveFreq;
     uniform float rotationSpeed;
+    uniform float verticalWave;
     varying vec2 vUv;
 
     const float TAU = 6.28318530718;
@@ -87,10 +89,11 @@ const CMYKShader = {
       // Original center sample
       vec4 center = texture2D(tDiffuse, vUv);
 
-      // Traveling wave from left to right: sin(kx - ωt)
-      // waveFreq controls how many wave cycles fit across the screen
-      // breatheSpeed controls how fast the wave travels rightward
-      float wavePhase = vUv.x * breatheWaveFreq * TAU - time * breatheSpeed;
+      // Traveling wave: sin(kx - ωt)
+      // Desktop: left to right (use vUv.x)
+      // Mobile: top to bottom (use vUv.y, inverted so wave travels downward)
+      float waveCoord = mix(vUv.x, 1.0 - vUv.y, verticalWave);
+      float wavePhase = waveCoord * breatheWaveFreq * TAU - time * breatheSpeed;
       float wave = sin(wavePhase);
 
       // Apply breathing modulation (when enabled)
