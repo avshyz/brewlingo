@@ -31,37 +31,6 @@
       border-image-source: url('assets/header-frill-cyan.svg');
     }
 
-    .back-link {
-      position: fixed;
-      bottom: 1.5rem;
-      left: 1rem;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      width: 48px;
-      height: 48px;
-      font-size: 1.25rem;
-      color: var(--black);
-      text-decoration: none;
-      background: var(--white);
-      border: 2px solid var(--black);
-      border-radius: 8px;
-      z-index: 100;
-      transition: all 0.2s ease;
-      box-shadow: 3px 3px 0 rgba(0,0,0,0.2);
-    }
-
-    @media (max-width: 768px) {
-      .back-link {
-        display: flex;
-      }
-    }
-
-    .back-link:hover {
-      background: var(--black);
-      color: var(--white);
-    }
-
     /* TL;DR Box */
     .tldr-box {
       background: var(--yellow);
@@ -234,10 +203,6 @@
   </style>
 </head>
 <body>
-  <a href="index.html" class="back-link" aria-label="Back to home" onclick="event.preventDefault(); history.back()">
-    <i class="fa-solid fa-arrow-left"></i>
-  </a>
-
   <div class="marquee-banner">
     <div class="marquee-content">
       <span>Dial in your brew</span>
