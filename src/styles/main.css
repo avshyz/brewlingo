@@ -303,7 +303,7 @@ header {
 
     & .cmyk-hover {
       text-shadow:
-        calc(var(--card-shadow-offset) * -1) calc(var(--card-shadow-offset) * -1) 0 cyan,
+        calc(var(--card-shadow-initial) * -1) calc(var(--card-shadow-initial) * -1) 0 cyan,
         var(--card-shadow-offset) var(--card-shadow-offset) 0 magenta;
     }
   }
