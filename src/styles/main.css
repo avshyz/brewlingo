@@ -42,6 +42,13 @@ a, button {
   --card-border: 1.5px;
   --card-shadow-offset: 3px;
   --card-shadow-initial: 1.5px;
+
+  /* Shadow shortcuts */
+  --shadow-sm: var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black);
+  --shadow-md: var(--card-shadow-offset) var(--card-shadow-offset) 0 var(--black);
+  --shadow-lg: calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black);
+  --lift: translate(calc(var(--card-shadow-offset) * -1), calc(var(--card-shadow-offset) * -1));
+
   --view-width: 1200px;
   --view-padding: 2rem;
   --transition-duration: 350ms;
@@ -257,16 +264,52 @@ header {
   background: var(--white);
   border: 2px solid var(--black);
   border-radius: 0.75rem;
-  box-shadow: var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black);
+  box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   &.static {
     box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.25);
     transition: none;
   }
+
+  /* Behavior classes for children */
+  & .shadow-hover {
+    transition: box-shadow 0.2s ease;
+  }
+
+  & .drop-shadow-rest {
+    filter: drop-shadow(var(--shadow-sm));
+  }
+
+  & .drop-shadow-hover {
+    transition: filter 0.2s ease;
+  }
+
+  & .cmyk-hover {
+    transition: text-shadow 0.2s ease;
+  }
+
+  &:not(.static):hover {
+    transform: var(--lift);
+    box-shadow: var(--shadow-lg);
+
+    & .shadow-hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    & .drop-shadow-hover {
+      filter: drop-shadow(var(--shadow-md));
+    }
+
+    & .cmyk-hover {
+      text-shadow:
+        calc(var(--card-shadow-offset) * -1) calc(var(--card-shadow-offset) * -1) 0 cyan,
+        var(--card-shadow-offset) var(--card-shadow-offset) 0 magenta;
+    }
+  }
 }
 
-/* CARDS */
+/* CARDS - extends .card-base */
 .card {
   /* Button reset - semantic <button> for proper focus-visible heuristics */
   appearance: none;
@@ -274,15 +317,11 @@ header {
   color: inherit;
   text-align: left;
   width: 100%;
-  /* Card styles */
-  background: var(--white);
-  border: var(--card-border) solid var(--black);
-  border-radius: 0.75rem;
+  /* Card-specific styles */
+  border-width: var(--card-border);
   position: relative;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
   cursor: pointer;
-  box-shadow: var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black);
   user-select: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -301,33 +340,6 @@ header {
     &:focus-visible {
       outline: 3px solid magenta;
       outline-offset: 4px;
-    }
-  }
-
-  & .card-title {
-    text-shadow: 0 0 0 cyan, 0 0 0 magenta;
-    transition: text-shadow 0.2s ease;
-  }
-
-  &:hover {
-    transform: translate(calc(var(--card-shadow-offset) * -1), calc(var(--card-shadow-offset) * -1));
-    box-shadow: calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black);
-
-    & .card-title {
-      text-shadow: -1.5px -1.5px 0 cyan, var(--card-shadow-offset) var(--card-shadow-offset) 0 magenta;
-    }
-
-    & .card-icon {
-      filter: drop-shadow(var(--card-shadow-offset) var(--card-shadow-offset) 0 var(--black));
-    }
-
-    & .chip,
-    & .card-toggle {
-      box-shadow: var(--card-shadow-offset) var(--card-shadow-offset) 0 var(--black);
-    }
-
-    & .chip-icon {
-      text-shadow: -2px -2px 0 cyan, var(--card-shadow-offset) var(--card-shadow-offset) 0 magenta;
     }
   }
 
@@ -397,8 +409,6 @@ header {
 
 .card-icon {
   flex-shrink: 0;
-  filter: drop-shadow(var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black));
-  transition: filter 0.2s ease, transform 0.2s ease;
 
   & i {
     font-size: 2rem;
@@ -480,13 +490,10 @@ header {
   font-weight: 700;
   text-transform: uppercase;
   background: var(--white);
-  transition: box-shadow 0.2s ease;
 }
 
 .chip-icon {
   font-size: 0.8rem;
-  text-shadow: 0 0 0 cyan, 0 0 0 magenta;
-  transition: text-shadow 0.2s ease;
 }
 
 ::view-transition-group(*) {
@@ -528,7 +535,7 @@ dialog {
   width: calc(100% - 2rem);
   max-height: 85vh;
   overflow: hidden;
-  box-shadow: var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black);
+  box-shadow: var(--shadow-sm);
   margin: auto;
   inset: 0;
 
@@ -1222,7 +1229,7 @@ footer {
   }
 }
 
-/* Individual feature card - with icon contour shadow hover effect */
+/* Individual feature card */
 .feature-card {
   padding: 1.5rem;
   text-decoration: none;
@@ -1245,27 +1252,12 @@ footer {
     align-items: start;
   }
 
-  &:hover {
-    transform: translate(calc(var(--card-shadow-offset) * -1), calc(var(--card-shadow-offset) * -1));
-    box-shadow: calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black);
-
-    & .feature-card-icon {
-      filter: drop-shadow(var(--card-shadow-offset) var(--card-shadow-offset) 0 var(--black));
-    }
-
-    & h3 {
-      text-shadow: -1.5px -1.5px 0 cyan, 3px 3px 0 magenta;
-    }
-  }
-
   & h3 {
     font-family: var(--font-primary);
     font-size: 1.1rem;
     font-weight: 700;
     text-transform: uppercase;
     margin: 0 0 0.5rem 0;
-    text-shadow: 0 0 0 cyan, 0 0 0 magenta;
-    transition: text-shadow 0.2s ease;
 
     @media (max-width: 640px) {
       font-size: 1rem;
@@ -1291,11 +1283,9 @@ footer {
   }
 }
 
-/* Feature card icon with contour outline */
+/* Feature card icon */
 .feature-card-icon {
   margin-bottom: 1rem;
-  filter: drop-shadow(var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black));
-  transition: filter 0.2s ease, transform 0.2s ease;
 
   @media (max-width: 640px) {
     grid-area: icon;
