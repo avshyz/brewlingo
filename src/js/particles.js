@@ -59,7 +59,9 @@ const CONFIG = {
   collisionDamping: 0.8,
   collisionRadiusMultiplier: 0.5,
   // Import all bean shape/style settings from shared config
-  ...BEAN_CONFIG
+  ...BEAN_CONFIG,
+  // Roast level theme selector
+  roastLevel: 'light'
 };
 
 // Store initial config for reset/export functionality
@@ -360,6 +362,59 @@ function toggleLandingCard(visible) {
   });
 }
 
+// Roast level color themes
+const ROAST_LEVELS = {
+  green: {
+    baseColor: '#7A9A6D',
+    highlightColor: '#B8C9A8',
+    creaseColor: '#5C7A4F'
+  },
+  light: {
+    baseColor: '#C4A484',
+    highlightColor: '#E8DCC4',
+    creaseColor: '#A08060'
+  },
+  mediumLight: {
+    baseColor: '#A68850',
+    highlightColor: '#D4BC8A',
+    creaseColor: '#7A6438'
+  },
+  medium: {
+    baseColor: '#8B6914',
+    highlightColor: '#C9A86C',
+    creaseColor: '#5C4A20'
+  },
+  dark: {
+    baseColor: '#5C4532',
+    highlightColor: '#8A7058',
+    creaseColor: '#3E2E22'
+  }
+};
+
+// Apply a roast level color theme
+function applyRoastLevel(level) {
+  const roast = ROAST_LEVELS[level];
+  if (!roast) return;
+
+  CONFIG.baseColor = roast.baseColor;
+  CONFIG.highlightColor = roast.highlightColor;
+  CONFIG.creaseColor = roast.creaseColor;
+
+  // Update shader uniforms
+  beanMaterial.uniforms.baseColor.value.set(roast.baseColor);
+  beanMaterial.uniforms.highlightColor.value.set(roast.highlightColor);
+  beanMaterial.uniforms.creaseColor.value.set(roast.creaseColor);
+
+  // Update color picker displays
+  if (gui) {
+    gui.controllersRecursive().forEach(c => {
+      if (['baseColor', 'highlightColor', 'creaseColor'].includes(c.property)) {
+        c.updateDisplay();
+      }
+    });
+  }
+}
+
 // Preset definitions
 const PRESETS = {
   classic: {
@@ -574,6 +629,13 @@ function setupGUI() {
   colorSub.add(CONFIG, 'colorEnabled').name('Enable').onChange(v => {
     beanMaterial.uniforms.colorEnabled.value = v ? 1.0 : 0.0;
   });
+  colorSub.add(CONFIG, 'roastLevel', {
+    'Green': 'green',
+    'Light': 'light',
+    'Medium-Light': 'mediumLight',
+    'Medium': 'medium',
+    'Dark': 'dark'
+  }).name('☕ Roast Level').onChange(applyRoastLevel);
   colorSub.addColor(CONFIG, 'baseColor').name('Bean').onChange(v => {
     beanMaterial.uniforms.baseColor.value.set(v);
   });
