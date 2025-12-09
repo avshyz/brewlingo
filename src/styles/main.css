@@ -124,8 +124,9 @@ header {
   margin-bottom: 2rem;
   position: relative;
   border-bottom: 16px solid transparent;
-  border-image: url('/assets/header-frill.svg') 16 round;
-  border-image-repeat: repeat;
+  /* border-image-source is in frills.css (inlined data URI) */
+  border-image-slice: 0 0 16 0;
+  border-image-repeat: round;
 
   & h1 {
     max-width: var(--view-width);
