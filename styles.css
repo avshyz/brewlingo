@@ -267,7 +267,8 @@ header {
       text-shadow: -1.5px -1.5px 0 cyan, var(--card-shadow-offset) var(--card-shadow-offset) 0 magenta;
     }
 
-    & .chip {
+    & .chip,
+    & .card-toggle {
       box-shadow: var(--card-shadow-offset) var(--card-shadow-offset) 0 var(--black);
     }
 
@@ -357,6 +358,7 @@ header {
   font-size: 1.2rem;
   flex-shrink: 0;
   color: var(--black);
+  transition: box-shadow 0.2s ease-in-out;
 }
 
 .card-preview {
@@ -1157,15 +1159,15 @@ footer {
   color: var(--black);
   text-align: left;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 2px 2px 0 var(--black);
+  box-shadow: var(--card-shadow-initial) var(--card-shadow-initial) 0 var(--black);
 
   @media (max-width: 640px) {
     padding: 0.875rem;
   }
 
   &:hover {
-    transform: translate(-3px, -3px);
-    box-shadow: 5px 5px 0 var(--black);
+    transform: translate(calc(var(--card-shadow-offset) * -1), calc(var(--card-shadow-offset) * -1));
+    box-shadow: calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black);
 
     & .feature-card-header i {
       text-shadow: -1.5px -1.5px 0 cyan, 3px 3px 0 magenta;
