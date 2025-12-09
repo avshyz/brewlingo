@@ -156,6 +156,9 @@ dialog.addEventListener('click', (e) => {
   }
 });
 
+// Close button click handler
+dialog.querySelector('.dialog-close').addEventListener('click', closeDialog);
+
 // Close on Escape key (prevent default to use our animation)
 dialog.addEventListener('cancel', (e) => {
   e.preventDefault();
