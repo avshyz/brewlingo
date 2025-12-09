@@ -9,19 +9,19 @@ import * as THREE from 'three';
 // ============================================
 export const BEAN_CONFIG = {
   // Bean shape
-  beanScaleX: 0.55,
-  beanScaleY: 0.8,
-  beanScaleZ: 0.45,
+  beanScaleX: 0.45,
+  beanScaleY: 0.66,
+  beanScaleZ: 0.35,
   // Kidney deformation
-  kidneyAmount: 0.25,      // How much kidney curve (0 = ellipse, 0.3 = strong kidney)
-  kidneyOffset: 0.15,      // Vertical offset of the curve center
+  kidneyAmount: 0.02,      // How much kidney curve (0 = ellipse, 0.3 = strong kidney)
+  kidneyOffset: 0.3,       // Vertical offset of the curve center
   // Asymmetric bulge (flat front, domed back)
-  backBulge: 0.2,          // Extra convexity on back side
+  backBulge: 0.25,         // Extra convexity on back side
   // End pinch
-  endPinch: 0.3,           // How much the ends pinch inward
-  endPointiness: 0.15,     // How pointed vs rounded the ends are
+  endPinch: 0,             // How much the ends pinch inward
+  endPointiness: 0.14,     // How pointed vs rounded the ends are
   // Crease
-  creaseWidth: 0.035,
+  creaseWidth: 0.027,
   creaseLength: 0.7,
   creaseRadius: 0.02,      // Rounded ends (0 = sharp, higher = more rounded)
   // Cel-shading settings
