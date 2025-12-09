@@ -11,6 +11,8 @@ import gsap from 'gsap';
 import {
   BEAN_CONFIG,
   GEOMETRY_TYPES,
+  CLASSIC_DEFAULT_DIMS,
+  SUPERELLIPSE_DEFAULT_DIMS,
   createBeanGeometry,
   createBeanShaderUniforms,
   BeanShaderVertexShader,
@@ -38,8 +40,8 @@ const CONFIG = {
   beanCount: 200,
   driftSpeed: 0.5,
   rotationSpeed: 3,
-  scaleMin: 0.05,
-  scaleMax: 0.48,
+  scaleMin: 0.1,
+  scaleMax: 0.43,
   depthMin: -5,
   depthMax: 2,
   spreadX: 12,
@@ -412,7 +414,20 @@ function setupGUI() {
   viewFolder.add(CONFIG, 'geometryType', {
     'Classic (ellipsoid)': GEOMETRY_TYPES.CLASSIC,
     'Superellipse (kidney)': GEOMETRY_TYPES.SUPERELLIPSE
-  }).name('🫘 Geometry').onChange(rebuildGeometry);
+  }).name('🫘 Geometry').onChange(type => {
+    // Apply default dimensions for selected geometry type
+    const dims = type === GEOMETRY_TYPES.CLASSIC ? CLASSIC_DEFAULT_DIMS : SUPERELLIPSE_DEFAULT_DIMS;
+    CONFIG.beanScaleX = dims.beanScaleX;
+    CONFIG.beanScaleY = dims.beanScaleY;
+    CONFIG.beanScaleZ = dims.beanScaleZ;
+    // Update GUI sliders
+    gui.controllersRecursive().forEach(c => {
+      if (['beanScaleX', 'beanScaleY', 'beanScaleZ'].includes(c.property)) {
+        c.updateDisplay();
+      }
+    });
+    rebuildGeometry();
+  });
   viewKeys.add('geometryType');
   addResetButton(viewFolder, () => {
     cmykPass.enabled = CONFIG.cmykEnabled;

@@ -226,6 +226,19 @@ export const GEOMETRY_TYPES = {
   SUPERELLIPSE: 'superellipse'
 };
 
+// Default dimensions for each geometry type
+export const CLASSIC_DEFAULT_DIMS = {
+  beanScaleX: 0.55,
+  beanScaleY: 0.65,
+  beanScaleZ: 0.4
+};
+
+export const SUPERELLIPSE_DEFAULT_DIMS = {
+  beanScaleX: 0.45,
+  beanScaleY: 0.66,
+  beanScaleZ: 0.35
+};
+
 export function createBeanGeometry(config = BEAN_CONFIG, params = {}) {
   const geometryType = config.geometryType || GEOMETRY_TYPES.SUPERELLIPSE;
 
