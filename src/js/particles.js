@@ -488,20 +488,7 @@ function setupGUI() {
   viewFolder.add(CONFIG, 'geometryType', {
     'Classic (ellipsoid)': GEOMETRY_TYPES.CLASSIC,
     'Superellipse (kidney)': GEOMETRY_TYPES.SUPERELLIPSE
-  }).name('🫘 Geometry').onChange(type => {
-    // Apply default dimensions for selected geometry type
-    const dims = type === GEOMETRY_TYPES.CLASSIC ? CLASSIC_DEFAULT_DIMS : SUPERELLIPSE_DEFAULT_DIMS;
-    CONFIG.beanScaleX = dims.beanScaleX;
-    CONFIG.beanScaleY = dims.beanScaleY;
-    CONFIG.beanScaleZ = dims.beanScaleZ;
-    // Update GUI sliders
-    gui.controllersRecursive().forEach(c => {
-      if (['beanScaleX', 'beanScaleY', 'beanScaleZ'].includes(c.property)) {
-        c.updateDisplay();
-      }
-    });
-    rebuildGeometry();
-  });
+  }).name('🫘 Geometry').onChange(rebuildGeometry);
   viewKeys.add('geometryType');
 
   // Card transition subfolder
