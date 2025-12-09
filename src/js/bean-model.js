@@ -8,10 +8,18 @@ import * as THREE from 'three';
 // BEAN SHAPE CONFIGURATION
 // ============================================
 export const BEAN_CONFIG = {
-  // Bean shape (OLD ellipsoid-based values)
-  beanScaleX: 0.6,
-  beanScaleY: 0.75,
-  beanScaleZ: 0.5,
+  // Bean shape
+  beanScaleX: 0.55,
+  beanScaleY: 0.8,
+  beanScaleZ: 0.45,
+  // Kidney deformation
+  kidneyAmount: 0.25,      // How much kidney curve (0 = ellipse, 0.3 = strong kidney)
+  kidneyOffset: 0.15,      // Vertical offset of the curve center
+  // Asymmetric bulge (flat front, domed back)
+  backBulge: 0.2,          // Extra convexity on back side
+  // End pinch
+  endPinch: 0.3,           // How much the ends pinch inward
+  endPointiness: 0.15,     // How pointed vs rounded the ends are
   // Crease
   creaseWidth: 0.035,
   creaseLength: 0.7,
@@ -52,58 +60,67 @@ function smoothstep(edge0, edge1, x) {
 }
 
 // ============================================
-// PARAMETRIC BEAN GEOMETRY (OLD ellipsoid-based)
+// PARAMETRIC BEAN GEOMETRY
 // ============================================
 export function createBeanGeometry(config = BEAN_CONFIG, params = {}) {
   const {
     segmentsU = 48,
     segmentsV = 32,
-    grooveDepth = 0.2,
-    grooveWidth = 0.25
+    grooveDepth = 0.22,
+    grooveWidth = 0.28
   } = params;
 
-  // Use config values
+  // Use config values (allows passing custom config or defaults)
   const scaleX = config.beanScaleX;
   const scaleY = config.beanScaleY;
   const scaleZ = config.beanScaleZ;
+  const kidneyAmount = config.kidneyAmount;
+  const kidneyOffset = config.kidneyOffset;
+  const backBulge = config.backBulge;
+  const endPinch = config.endPinch;
+  const endPointiness = config.endPointiness;
 
   const vertices = [];
   const indices = [];
   const uvParams = [];
 
   for (let iv = 0; iv <= segmentsV; iv++) {
-    const v = (iv / segmentsV) * 2 - 1; // -1 to 1 (along bean length)
+    const v = (iv / segmentsV) * 2 - 1;
 
     for (let iu = 0; iu <= segmentsU; iu++) {
-      const u = (iu / segmentsU) * 2 - 1; // -1 to 1 (across groove)
-
-      // Base ellipsoid using spherical coordinates
-      const theta = Math.acos(v);
+      const u = (iu / segmentsU) * 2 - 1;
       const phi = u * Math.PI;
+      const n = 2.5;
+      const cosPhi = Math.cos(phi);
+      const sinPhi = Math.sin(phi);
+      const signX = Math.sign(sinPhi);
+      const signZ = Math.sign(cosPhi);
 
-      // Ellipsoid base position
-      let x = Math.sin(theta) * Math.sin(phi) * scaleX;
-      let y = Math.cos(theta) * scaleY;
-      let z = Math.sin(theta) * Math.cos(phi) * scaleZ;
+      let crossX = signX * Math.pow(Math.abs(sinPhi), 2/n);
+      let crossZ = signZ * Math.pow(Math.abs(cosPhi), 2/n);
 
-      // Groove calculation - affects front side (positive Z)
-      const grooveMask = smoothstep(grooveWidth, 0, Math.abs(u));
+      const absV = Math.abs(v);
+      const vSquared = v * v;
+      const baseRadius = Math.pow(1 - Math.pow(absV, 2 + endPointiness), 0.5 + endPointiness * 0.5);
+      const kidneyShift = kidneyAmount * Math.sin((v - kidneyOffset) * Math.PI * 0.9);
+      const zSign = crossZ < 0 ? 1 : 0;
+      const bulgeFactor = 1 + backBulge * zSign * (1 - vSquared * 0.5);
+      const pinchFactor = 1 - endPinch * Math.pow(absV, 3);
 
-      // Apply groove - push inward on Z
+      let x = crossX * baseRadius * scaleX * pinchFactor + kidneyShift * baseRadius * scaleX;
+      let y = v * scaleY;
+      let z = crossZ * baseRadius * scaleZ * bulgeFactor;
+
       if (z > 0) {
-        const lengthFactor = 1 - v * v * 0.4; // Less groove at tips
-        z -= grooveDepth * grooveMask * lengthFactor;
-        // Pinch X slightly in groove
-        x *= 1 - grooveMask * 0.1;
+        const grooveMask = smoothstep(grooveWidth, 0, Math.abs(u));
+        const lengthFactor = 1 - vSquared * 0.5;
+        z -= grooveDepth * grooveMask * lengthFactor * baseRadius;
+        x *= 1 - grooveMask * 0.08;
       }
 
-      // Slight asymmetry
-      z *= 1 + 0.03 * Math.sin(v * Math.PI * 0.5);
-
-      // Gentle taper at ends
-      const taper = 1 - Math.abs(v) * 0.08;
-      x *= taper;
-      z *= taper;
+      const asymmetry = 0.02;
+      x += asymmetry * Math.sin(v * Math.PI * 2.1) * baseRadius;
+      z *= 1 + asymmetry * Math.sin(v * Math.PI * 1.3);
 
       vertices.push(x, y, z);
       uvParams.push(u, v);

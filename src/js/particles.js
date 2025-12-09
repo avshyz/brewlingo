@@ -231,6 +231,13 @@ function setupGUI() {
   shapeSub.add(CONFIG, 'beanScaleY', 0.3, 1, 0.05).name('Length').onFinishChange(rebuildGeometry);
   shapeSub.add(CONFIG, 'beanScaleZ', 0.3, 1, 0.05).name('Thickness').onFinishChange(rebuildGeometry);
 
+  const kidneySub = createFolder(beanFolder, 'Kidney Curve');
+  kidneySub.add(CONFIG, 'kidneyAmount', 0, 0.5, 0.01).name('Amount').onFinishChange(rebuildGeometry);
+  kidneySub.add(CONFIG, 'kidneyOffset', -0.3, 0.3, 0.01).name('Offset').onFinishChange(rebuildGeometry);
+  kidneySub.add(CONFIG, 'backBulge', 0, 0.5, 0.01).name('Back Bulge').onFinishChange(rebuildGeometry);
+  kidneySub.add(CONFIG, 'endPinch', 0, 0.6, 0.01).name('End Pinch').onFinishChange(rebuildGeometry);
+  kidneySub.add(CONFIG, 'endPointiness', 0, 0.5, 0.01).name('Pointiness').onFinishChange(rebuildGeometry);
+
   const creaseSub = createFolder(beanFolder, 'Crease');
   creaseSub.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.001).name('Width').onChange(v => {
     beanMaterial.uniforms.creaseWidth.value = v;

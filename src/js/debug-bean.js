@@ -237,6 +237,15 @@ function setupGUI() {
   addResetButton(shapeFolder, rebuildGeometry);
   shapeFolder.open();
 
+  // Kidney Curve
+  const kidneyFolder = gui.addFolder('Kidney Curve');
+  kidneyFolder.add(CONFIG, 'kidneyAmount', 0, 0.5, 0.01).name('Amount').onChange(rebuildGeometry);
+  kidneyFolder.add(CONFIG, 'kidneyOffset', -0.3, 0.3, 0.01).name('Offset').onChange(rebuildGeometry);
+  kidneyFolder.add(CONFIG, 'backBulge', 0, 0.5, 0.01).name('Back Bulge').onChange(rebuildGeometry);
+  kidneyFolder.add(CONFIG, 'endPinch', 0, 0.6, 0.01).name('End Pinch').onChange(rebuildGeometry);
+  kidneyFolder.add(CONFIG, 'endPointiness', 0, 0.5, 0.01).name('Pointiness').onChange(rebuildGeometry);
+  addResetButton(kidneyFolder, rebuildGeometry);
+
   // Crease
   const creaseFolder = gui.addFolder('Crease');
   creaseFolder.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.001).name('Width').onChange(v => {
