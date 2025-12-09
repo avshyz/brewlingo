@@ -3,7 +3,6 @@
  * Procedural geometry with cel-shaded look + CMYK post-processing halo
  */
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
@@ -31,8 +30,8 @@ const CONFIG = {
   // View options
   singleBeanMode: false,  // Default unchecked (starts in multi-bean view)
   showUI: true,           // Show landing card UI
-  autoRotate: false,
   cmykEnabled: true,      // CMYK on by default for landing
+  wireframe: false,       // Show wireframe mesh
   // Scene settings (not in BEAN_CONFIG)
   beanCount: 200,
   driftSpeed: 0.5,
@@ -82,7 +81,7 @@ const BeanShader = {
 // ============================================
 // GLOBALS
 // ============================================
-let scene, camera, renderer, composer, cmykPass, controls;
+let scene, camera, renderer, composer, cmykPass;
 let beans = [];
 let beanGeometry = null;
 let beanMaterial = null;
@@ -91,6 +90,11 @@ let heroBean = null;  // The featured bean in single-bean mode
 let isTransitioning = false;
 let cmykController = null;  // Reference to update checkbox when mode toggles
 let landingCard = null;  // Reference to .landing-card element
+
+// Drag-to-rotate state
+let isDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
+const rotationSpeed = 0.005;
 
 // ============================================
 // INITIALIZATION
@@ -136,14 +140,6 @@ function init() {
   cmykPass.enabled = CONFIG.cmykEnabled;
   composer.addPass(cmykPass);
 
-  // OrbitControls (disabled by default in multi-bean mode)
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
-  controls.autoRotate = CONFIG.autoRotate;
-  controls.autoRotateSpeed = 1.0;
-  controls.enabled = CONFIG.singleBeanMode;  // Disabled in multi-bean mode
-
   // Get landing card reference for fade transitions
   landingCard = document.querySelector('.landing-card');
 
@@ -164,7 +160,73 @@ function init() {
     setupGUI();
   }
 
+  // Setup drag-to-rotate event listeners
+  setupDragToRotate(renderer.domElement);
+
   window.addEventListener('resize', handleResize);
+}
+
+// ============================================
+// DRAG-TO-ROTATE (for single bean mode)
+// ============================================
+function setupDragToRotate(canvas) {
+  // Mouse events
+  canvas.addEventListener('mousedown', onDragStart);
+  canvas.addEventListener('mousemove', onDragMove);
+  canvas.addEventListener('mouseup', onDragEnd);
+  canvas.addEventListener('mouseleave', onDragEnd);
+
+  // Touch events
+  canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+  canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+  canvas.addEventListener('touchend', onDragEnd);
+}
+
+function onDragStart(e) {
+  if (!CONFIG.singleBeanMode || isTransitioning || !heroBean) return;
+  isDragging = true;
+  previousMousePosition = { x: e.clientX, y: e.clientY };
+}
+
+function onTouchStart(e) {
+  if (!CONFIG.singleBeanMode || isTransitioning || !heroBean) return;
+  e.preventDefault();
+  isDragging = true;
+  const touch = e.touches[0];
+  previousMousePosition = { x: touch.clientX, y: touch.clientY };
+}
+
+function onDragMove(e) {
+  if (!isDragging || !heroBean) return;
+
+  const deltaX = e.clientX - previousMousePosition.x;
+  const deltaY = e.clientY - previousMousePosition.y;
+
+  // Rotate bean based on drag direction
+  // Horizontal drag -> rotate around Y axis
+  // Vertical drag -> rotate around X axis
+  heroBean.rotation.y += deltaX * rotationSpeed;
+  heroBean.rotation.x += deltaY * rotationSpeed;
+
+  previousMousePosition = { x: e.clientX, y: e.clientY };
+}
+
+function onTouchMove(e) {
+  if (!isDragging || !heroBean) return;
+  e.preventDefault();
+
+  const touch = e.touches[0];
+  const deltaX = touch.clientX - previousMousePosition.x;
+  const deltaY = touch.clientY - previousMousePosition.y;
+
+  heroBean.rotation.y += deltaX * rotationSpeed;
+  heroBean.rotation.x += deltaY * rotationSpeed;
+
+  previousMousePosition = { x: touch.clientX, y: touch.clientY };
+}
+
+function onDragEnd() {
+  isDragging = false;
 }
 
 // ============================================
@@ -337,12 +399,12 @@ function setupGUI() {
   cmykController = addViewControl('cmykEnabled').name('✨ CMYK Halo').onChange(v => {
     cmykPass.enabled = v;
   });
-  addViewControl('autoRotate').name('Auto Rotate').onChange(v => {
-    controls.autoRotate = v;
+  addViewControl('wireframe').name('🔲 Wireframe').onChange(v => {
+    beanMaterial.wireframe = v;
   });
   addResetButton(viewFolder, () => {
     cmykPass.enabled = CONFIG.cmykEnabled;
-    controls.autoRotate = CONFIG.autoRotate;
+    beanMaterial.wireframe = CONFIG.wireframe;
     if (landingCard) {
       landingCard.style.opacity = CONFIG.showUI ? 1 : 0;
       landingCard.style.pointerEvents = CONFIG.showUI ? 'auto' : 'none';
@@ -558,9 +620,6 @@ function updateVelocities() {
 // MULTI/SINGLE BEAN MODE TRANSITIONS
 // ============================================
 function transitionToSingleBean() {
-  // Disable controls during transition
-  controls.enabled = false;
-
   // Find bean closest to screen center (project to screen space)
   let closestBean = beans[0];
   let closestDist = Infinity;
@@ -607,10 +666,6 @@ function transitionToSingleBean() {
   // Create animation timeline
   const tl = gsap.timeline({
     onComplete: () => {
-      // Set controls target to hero position and enable
-      controls.target.set(heroPos.x, heroPos.y, heroPos.z);
-      controls.update();
-      controls.enabled = true;
       // Toggle body class for CSS z-index/pointer-events
       document.body.classList.add('single-bean-mode');
       isTransitioning = false;
@@ -619,14 +674,15 @@ function transitionToSingleBean() {
 
   const duration = 1.4;
 
-  // Fade out landing card (respecting showUI setting)
+  // Fade out and scale up landing card (synced with camera zoom)
   if (landingCard && CONFIG.showUI) {
+    landingCard.style.pointerEvents = 'none';
     tl.to(landingCard, {
       opacity: 0,
-      duration: 0.4,
-      ease: 'power2.out',
-      onComplete: () => { landingCard.style.pointerEvents = 'none'; }
-    }, 0.1);
+      scale: 1.3,
+      duration: duration * 0.9,
+      ease: 'expo.inOut'
+    }, 0);
   }
 
   // Camera pans TO the hero position
@@ -636,16 +692,6 @@ function transitionToSingleBean() {
     z: cameraTargetPos.z,
     duration: duration,
     ease: 'expo.inOut'
-  }, 0);
-
-  // Animate controls.target to hero position (for smooth orbit pivot)
-  tl.to(controls.target, {
-    x: heroPos.x,
-    y: heroPos.y,
-    z: heroPos.z,
-    duration: duration,
-    ease: 'expo.inOut',
-    onUpdate: () => controls.update()
   }, 0);
 
   // Hero scales up to full size (stays in place!)
@@ -686,35 +732,35 @@ function transitionToSingleBean() {
 }
 
 function transitionToMultiBean() {
-  // Disable controls during transition
-  controls.enabled = false;
   // Remove body class immediately so landing page is clickable as it fades in
   document.body.classList.remove('single-bean-mode');
 
-  // Turn on CMYK halo for multi bean mode
+  // Turn on CMYK halo and turn off wireframe for multi bean mode
   CONFIG.cmykEnabled = true;
   cmykPass.enabled = true;
+  CONFIG.wireframe = false;
+  beanMaterial.wireframe = false;
   if (cmykController) cmykController.updateDisplay();
+  if (gui) gui.controllersRecursive().find(c => c.property === 'wireframe')?.updateDisplay();
 
   // Create animation timeline
   const tl = gsap.timeline({
     onComplete: () => {
-      controls.target.set(0, 0, 0);
-      controls.update();
       isTransitioning = false;
     }
   });
 
   const duration = 1.4;
 
-  // Fade in landing card (respecting showUI setting)
+  // Fade in and scale down landing card (synced with camera zoom)
   if (landingCard && CONFIG.showUI) {
     landingCard.style.pointerEvents = 'auto';
     tl.to(landingCard, {
       opacity: 1,
-      duration: 0.4,
-      ease: 'power2.in'
-    }, 0.8);
+      scale: 1,
+      duration: duration * 0.9,
+      ease: 'expo.inOut'
+    }, 0);
   }
 
   // Camera zooms out to origin
@@ -722,14 +768,6 @@ function transitionToMultiBean() {
     x: 0, y: 0, z: 12,
     duration: duration,
     ease: 'expo.inOut'
-  }, 0);
-
-  // Animate controls.target back to origin
-  tl.to(controls.target, {
-    x: 0, y: 0, z: 0,
-    duration: duration,
-    ease: 'expo.inOut',
-    onUpdate: () => controls.update()
   }, 0);
 
   // Shrink hero bean to multi-bean scale if it exists
@@ -860,9 +898,6 @@ function animate() {
 
   // Update CMYK time for animated glow
   cmykPass.uniforms.time.value += 0.016; // ~60fps delta
-
-  // Update OrbitControls (handles damping, auto-rotate)
-  controls.update();
 
   // Animate beans only in multi-bean mode and not paused
   if (!CONFIG.singleBeanMode && !CONFIG.paused) {
