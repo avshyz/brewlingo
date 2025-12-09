@@ -44,7 +44,8 @@ a, button {
   --card-shadow-initial: 1.5px;
   --view-width: 1200px;
   --view-padding: 2rem;
-  --transition-duration: 0.3s;
+  --transition-duration: 200ms;
+  --slide-duration: 300ms;
 
   /* Typography */
   --font-primary: 'Work Sans', sans-serif;
@@ -1018,20 +1019,20 @@ footer {
 
 /* Slide forward (default) */
 :active-view-transition-type(slide)::view-transition-old(root) {
-  animation: slide-to-left 200ms ease-in-out forwards;
+  animation: slide-to-left var(--slide-duration) ease-in-out forwards;
 }
 
 :active-view-transition-type(slide)::view-transition-new(root) {
-  animation: slide-from-right 200ms ease-in-out forwards;
+  animation: slide-from-right var(--slide-duration) ease-in-out forwards;
 }
 
 /* Slide back */
 :active-view-transition-type(slide):active-view-transition-type(back)::view-transition-old(root) {
-  animation: slide-to-right 200ms ease-in-out forwards;
+  animation: slide-to-right var(--slide-duration) ease-in-out forwards;
 }
 
 :active-view-transition-type(slide):active-view-transition-type(back)::view-transition-new(root) {
-  animation: slide-from-left 200ms ease-in-out forwards;
+  animation: slide-from-left var(--slide-duration) ease-in-out forwards;
 }
 
 @keyframes slide-to-left {
