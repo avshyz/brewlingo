@@ -439,11 +439,11 @@ function transitionToMultiBean() {
     ease: 'power2.inOut'
   }, 0);
 
-  // Move hero bean toward center as camera zooms out
+  // Move hero bean to the back of the scene for dramatic zoom later
   tl.to(bean.position, {
     x: (Math.random() - 0.5) * 2,
     y: (Math.random() - 0.5) * 2,
-    z: CONFIG.depthMin + Math.random() * (CONFIG.depthMax - CONFIG.depthMin),
+    z: CONFIG.depthMin,  // Furthest from camera
     duration: 0.8,
     ease: 'power2.inOut'
   }, 0);
