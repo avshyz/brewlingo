@@ -251,8 +251,7 @@ header {
   }
 
   & .card-title,
-  & .card-icon,
-  & .card-toggle {
+  & .card-icon {
     text-shadow: 0 0 0 cyan, 0 0 0 magenta;
     transition: text-shadow 0.2s ease;
   }
@@ -262,8 +261,7 @@ header {
     box-shadow: calc(var(--card-shadow-initial) + var(--card-shadow-offset)) calc(var(--card-shadow-initial) + var(--card-shadow-offset)) 0 var(--black);
 
     & .card-title,
-    & .card-icon,
-    & .card-toggle {
+    & .card-icon {
       text-shadow: -1.5px -1.5px 0 cyan, var(--card-shadow-offset) var(--card-shadow-offset) 0 magenta;
     }
 
