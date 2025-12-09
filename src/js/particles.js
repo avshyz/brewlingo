@@ -37,6 +37,9 @@ const CONFIG = {
   wireframe: false,       // Show wireframe mesh
   preset: 'modern',       // Visual preset (classic, modern, lively)
   geometryType: GEOMETRY_TYPES.SUPERELLIPSE,  // Bean geometry style
+  // Landing card transition settings
+  cardFadeScale: 2,           // Scale factor when card fades out
+  cardFadeDuration: 0.9,      // Duration multiplier (relative to main transition)
   // Scene settings (not in BEAN_CONFIG)
   beanCount: 200,
   driftSpeed: 0.5,
@@ -500,6 +503,15 @@ function setupGUI() {
     rebuildGeometry();
   });
   viewKeys.add('geometryType');
+
+  // Card transition subfolder
+  const cardTransSub = createFolder(viewFolder, 'Card Transition');
+  cardTransSub.add(CONFIG, 'cardFadeScale', 1, 3, 0.1).name('Scale');
+  viewKeys.add('cardFadeScale');
+  cardTransSub.add(CONFIG, 'cardFadeDuration', 0.3, 1.5, 0.05).name('Duration');
+  viewKeys.add('cardFadeDuration');
+  addResetButton(cardTransSub);
+
   addResetButton(viewFolder, () => {
     cmykPass.enabled = CONFIG.cmykEnabled;
     beanMaterial.wireframe = CONFIG.wireframe;
@@ -778,8 +790,8 @@ function transitionToSingleBean() {
     landingCard.style.pointerEvents = 'none';
     tl.to(landingCard, {
       opacity: 0,
-      scale: 1.5,
-      duration: duration * 0.9,
+      scale: CONFIG.cardFadeScale,
+      duration: duration * CONFIG.cardFadeDuration,
       ease: 'expo.inOut'
     }, 0);
   }
@@ -889,15 +901,7 @@ function transitionToMultiBean() {
       duration: 0.6,
       ease: 'power2.inOut'
     }, 0);
-
-    // Move hero to random position
-    tl.to(heroBean.position, {
-      x: (Math.random() - 0.5) * CONFIG.spreadX * 2,
-      y: (Math.random() - 0.5) * CONFIG.spreadY * 2,
-      z: CONFIG.depthMin + Math.random() * (CONFIG.depthMax - CONFIG.depthMin),
-      duration: 0.8,
-      ease: 'power2.inOut'
-    }, 0);
+    // Hero drifts naturally via velocities set above - no forced position change
   }
 
   // Pop-reveal all other beans with stagger
