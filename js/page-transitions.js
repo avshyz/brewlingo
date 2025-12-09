@@ -1,5 +1,8 @@
 // Detect back navigation (not forward) and reverse slide direction
 function isBackNavigation() {
+  // Navigation API is not supported in Safari
+  if (typeof navigation === 'undefined') return false;
+
   const nav = navigation.activation;
   if (nav?.navigationType !== 'traverse') return false;
   return nav.from?.index > navigation.currentEntry?.index;
