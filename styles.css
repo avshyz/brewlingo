@@ -580,7 +580,7 @@ dialog {
 .dialog-body {
   padding: 1.25rem;
   overflow-y: auto;
-  flex: 1;
+  flex: 1 1 auto;
 }
 
 /* View Transitions */
