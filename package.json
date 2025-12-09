@@ -1,0 +1,20 @@
+{
+  "name": "brewlingo",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "generate-og": "node scripts/generate-og-image.js"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "gsap": "^3.12.5",
+    "lil-gui": "^0.19.2",
+    "sharp": "^0.33.0"
+  }
+}

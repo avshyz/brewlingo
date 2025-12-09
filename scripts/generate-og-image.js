@@ -3,14 +3,18 @@
 /**
  * Generates an Open Graph image (1200x630) from the bean SVG
  *
- * Usage: node scripts/generate-og-image.js
+ * Usage: npm run generate-og
  *
- * Requires: npm install sharp
+ * Requires: sharp (already in dependencies)
  */
 
-const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
+import sharp from 'sharp';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const OG_WIDTH = 1200;
 const OG_HEIGHT = 630;
