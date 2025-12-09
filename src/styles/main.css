@@ -328,6 +328,7 @@ header {
   gap: 0.75rem;
   border-bottom: var(--border);
   user-select: none;
+  width: 100%; /* Fix Safari flexbox inside button */
 }
 
 .card-icon {
