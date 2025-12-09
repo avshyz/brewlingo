@@ -169,7 +169,11 @@ header {
       animation: gradient-flow 16s linear infinite 2s;
 
       &:hover {
-        animation-duration: 2s;
+        background: linear-gradient(90deg, #0FF 0%, #F0F 33%, #FF0 66%, #0FF 100%);
+        background-size: 300% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        animation-duration: 1s;
         animation-delay: 0s;
       }
     }
