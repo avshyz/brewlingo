@@ -35,7 +35,7 @@ const CONFIG = {
   showUI: true,           // Show landing card UI
   cmykEnabled: true,      // CMYK on by default for landing
   wireframe: false,       // Show wireframe mesh
-  geometryType: GEOMETRY_TYPES.CLASSIC,  // Bean geometry style
+  geometryType: GEOMETRY_TYPES.SUPERELLIPSE,  // Bean geometry style
   // Scene settings (not in BEAN_CONFIG)
   beanCount: 200,
   driftSpeed: 0.5,
