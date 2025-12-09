@@ -29,6 +29,11 @@ const CONFIG = {
   elasticAmplitude: 1.5,
   elasticPeriod: 0.3,
   cmykOffset: 0.004,
+  cmykBreatheEnabled: true,
+  cmykBreatheIntensity: 0.3,
+  cmykBreatheSpeed: 0.8,
+  cmykBreatheStagger: 3.0,
+  cmykRotationSpeed: 0.4,
   creaseWidth: 0.035,
   creaseLength: 0.7,
   // Bean shape
@@ -49,7 +54,13 @@ const CONFIG = {
 const CMYKShader = {
   uniforms: {
     tDiffuse: { value: null },
-    offset: { value: CONFIG.cmykOffset }
+    offset: { value: CONFIG.cmykOffset },
+    time: { value: 0 },
+    breatheEnabled: { value: CONFIG.cmykBreatheEnabled ? 1.0 : 0.0 },
+    breatheIntensity: { value: CONFIG.cmykBreatheIntensity },
+    breatheSpeed: { value: CONFIG.cmykBreatheSpeed },
+    breatheStagger: { value: CONFIG.cmykBreatheStagger },
+    rotationSpeed: { value: CONFIG.cmykRotationSpeed }
   },
   vertexShader: `
     varying vec2 vUv;
@@ -61,16 +72,40 @@ const CMYKShader = {
   fragmentShader: `
     uniform sampler2D tDiffuse;
     uniform float offset;
+    uniform float time;
+    uniform float breatheEnabled;
+    uniform float breatheIntensity;
+    uniform float breatheSpeed;
+    uniform float breatheStagger;
+    uniform float rotationSpeed;
     varying vec2 vUv;
 
     void main() {
       // Original center sample
       vec4 center = texture2D(tDiffuse, vUv);
 
+      // Phase offset based on screen position for staggered breathing
+      float phaseOffset = (vUv.x + vUv.y) * breatheStagger;
+
+      // Animated offset with staggered breathing (when enabled)
+      float breathe = 1.0 + breatheEnabled * breatheIntensity * sin(time * breatheSpeed + phaseOffset);
+      float animOffset = offset * breathe;
+
+      // Slowly rotating angle for each color channel (120° apart)
+      float baseAngle = time * rotationSpeed;
+      float angleCyan = baseAngle;
+      float angleMagenta = baseAngle + 2.094; // +120°
+      float angleYellow = baseAngle + 4.189;  // +240°
+
+      // Calculate rotating offset directions
+      vec2 dirCyan = vec2(cos(angleCyan), sin(angleCyan)) * animOffset;
+      vec2 dirMagenta = vec2(cos(angleMagenta), sin(angleMagenta)) * animOffset;
+      vec2 dirYellow = vec2(cos(angleYellow), sin(angleYellow)) * animOffset;
+
       // Offset samples for color fringing at edges
-      vec4 cr = texture2D(tDiffuse, vUv + vec2(offset, offset * 0.5));
-      vec4 cm = texture2D(tDiffuse, vUv + vec2(-offset * 0.5, offset));
-      vec4 cy = texture2D(tDiffuse, vUv + vec2(-offset, -offset * 0.5));
+      vec4 cr = texture2D(tDiffuse, vUv + dirCyan);
+      vec4 cm = texture2D(tDiffuse, vUv + dirMagenta);
+      vec4 cy = texture2D(tDiffuse, vUv + dirYellow);
 
       // Create color fringes only where there's alpha difference (silhouette edges)
       float cyanEdge = max(0.0, cr.a - center.a);
@@ -311,6 +346,43 @@ function init() {
 // ============================================
 // DEBUG GUI
 // ============================================
+const GUI_STORAGE_KEY = 'brewlingo-gui-state';
+
+function getGuiState() {
+  try {
+    return JSON.parse(localStorage.getItem(GUI_STORAGE_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveGuiState(state) {
+  localStorage.setItem(GUI_STORAGE_KEY, JSON.stringify(state));
+}
+
+// Helper to create a folder with persistent open/close state
+function createFolder(parent, name) {
+  const folder = parent.addFolder(name);
+  const state = getGuiState();
+  const key = name.toLowerCase().replace(/\s+/g, '-');
+
+  // Restore saved state (default to closed)
+  if (state[key]) {
+    folder.open();
+  } else {
+    folder.close();
+  }
+
+  // Listen for open/close and persist
+  folder.onOpenClose((f) => {
+    const current = getGuiState();
+    current[key] = !f._closed;
+    saveGuiState(current);
+  });
+
+  return folder;
+}
+
 let debounceTimer = null;
 function debouncedReset() {
   clearTimeout(debounceTimer);
@@ -319,10 +391,19 @@ function debouncedReset() {
 
 function setupGUI() {
   gui = new GUI({ title: 'Debug UI' });
-  gui.close();
+  const state = getGuiState();
+  if (state['gui-root']) {
+    gui.open();
+  } else {
+    gui.close();
+  }
+  gui.onOpenClose((g) => {
+    const current = getGuiState();
+    current['gui-root'] = !g._closed;
+    saveGuiState(current);
+  });
 
-  const beansFolder = gui.addFolder('Beans');
-  beansFolder.close();
+  const beansFolder = createFolder(gui, 'Beans');
   beansFolder.add(CONFIG, 'beanCount', 10, 300, 1).name('Count').onFinishChange(resetBeans);
   beansFolder.add(CONFIG, 'scaleMin', 0.05, 0.3, 0.01).name('Scale Min').onFinishChange(resetBeans);
   beansFolder.add(CONFIG, 'scaleMax', 0.1, 0.6, 0.01).name('Scale Max').onFinishChange(resetBeans);
@@ -333,33 +414,43 @@ function setupGUI() {
     beanMaterial.uniforms.creaseLength.value = v;
   });
 
-  const shapeFolder = gui.addFolder('Bean Shape');
-  shapeFolder.close();
+  const shapeFolder = createFolder(gui, 'Bean Shape');
   shapeFolder.add(CONFIG, 'beanScaleX', 0.3, 1, 0.05).name('Width').onFinishChange(rebuildGeometry);
   shapeFolder.add(CONFIG, 'beanScaleY', 0.3, 1, 0.05).name('Length').onFinishChange(rebuildGeometry);
   shapeFolder.add(CONFIG, 'beanScaleZ', 0.3, 1, 0.05).name('Thickness').onFinishChange(rebuildGeometry);
 
-  const moveFolder = gui.addFolder('Movement');
-  moveFolder.close();
+  const moveFolder = createFolder(gui, 'Movement');
   moveFolder.add(CONFIG, 'driftSpeed', 0, 1, 0.01).name('Drift Speed').onFinishChange(updateVelocities);
   moveFolder.add(CONFIG, 'rotationSpeed', 0, 5, 0.1).name('Spin Speed').onFinishChange(updateVelocities);
   moveFolder.add(CONFIG, 'paused').name('⏸ Pause');
 
-  const spreadFolder = gui.addFolder('Spread');
-  spreadFolder.close();
+  const spreadFolder = createFolder(gui, 'Spread');
   spreadFolder.add(CONFIG, 'spreadX', 5, 25, 1).name('Spread X').onFinishChange(resetBeans);
   spreadFolder.add(CONFIG, 'spreadY', 3, 15, 1).name('Spread Y').onFinishChange(resetBeans);
   spreadFolder.add(CONFIG, 'depthMin', -10, 0, 0.5).name('Depth Min').onFinishChange(resetBeans);
   spreadFolder.add(CONFIG, 'depthMax', 0, 10, 0.5).name('Depth Max').onFinishChange(resetBeans);
 
-  const cmykFolder = gui.addFolder('CMYK Halo');
-  cmykFolder.close();
+  const cmykFolder = createFolder(gui, 'CMYK Halo');
   cmykFolder.add(CONFIG, 'cmykOffset', 0.001, 0.015, 0.0005).name('Offset').onChange(v => {
     cmykPass.uniforms.offset.value = v;
   });
+  cmykFolder.add(CONFIG, 'cmykBreatheEnabled').name('Breathe').onChange(v => {
+    cmykPass.uniforms.breatheEnabled.value = v ? 1.0 : 0.0;
+  });
+  cmykFolder.add(CONFIG, 'cmykBreatheIntensity', 0, 1, 0.05).name('Breathe Amt').onChange(v => {
+    cmykPass.uniforms.breatheIntensity.value = v;
+  });
+  cmykFolder.add(CONFIG, 'cmykBreatheSpeed', 0, 3, 0.1).name('Breathe Speed').onChange(v => {
+    cmykPass.uniforms.breatheSpeed.value = v;
+  });
+  cmykFolder.add(CONFIG, 'cmykBreatheStagger', 0, 10, 0.5).name('Breathe Stagger').onChange(v => {
+    cmykPass.uniforms.breatheStagger.value = v;
+  });
+  cmykFolder.add(CONFIG, 'cmykRotationSpeed', 0, 2, 0.05).name('Rotation Speed').onChange(v => {
+    cmykPass.uniforms.rotationSpeed.value = v;
+  });
 
-  const animFolder = gui.addFolder('Animation');
-  animFolder.close();
+  const animFolder = createFolder(gui, 'Animation');
   animFolder.add(CONFIG, 'staggerDelay', 5, 50, 1).name('Stagger (ms)').onFinishChange(debouncedReset);
   animFolder.add(CONFIG, 'animationDuration', 200, 2000, 50).name('Duration (ms)').onFinishChange(debouncedReset);
   animFolder.add(CONFIG, 'elasticAmplitude', 0.5, 3, 0.1).name('Amplitude').onFinishChange(debouncedReset);
@@ -460,6 +551,9 @@ function revealBeansStaggered() {
 // ============================================
 function animate() {
   requestAnimationFrame(animate);
+
+  // Update CMYK time for animated glow
+  cmykPass.uniforms.time.value += 0.016; // ~60fps delta
 
   if (!CONFIG.paused) {
     beans.forEach(bean => {
