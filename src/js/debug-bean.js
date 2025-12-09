@@ -9,6 +9,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import GUI from 'lil-gui';
+import gsap from 'gsap';
 import {
   BEAN_CONFIG,
   createBeanGeometry,
@@ -29,8 +30,19 @@ const CONFIG = {
   // View options (debug page specific)
   autoRotate: false,
   showWireframe: false,
-  showAxes: false,
-  backgroundColor: '#f5f0e8'
+  backgroundColor: '#ffffff',
+  cmykEnabled: false,  // Off by default for distraction-free sculpting
+  // Multi-bean mode settings
+  multiBeanMode: false,
+  beanCount: 200,
+  scaleMin: 0.05,
+  scaleMax: 0.48,
+  spreadX: 12,
+  spreadY: 8,
+  depthMin: -5,
+  depthMax: 2,
+  driftSpeed: 0.5,
+  rotationSpeed: 3
 };
 
 // ============================================
@@ -53,8 +65,9 @@ const BeanShader = {
 // ============================================
 let scene, camera, renderer, composer, cmykPass, controls;
 let bean, beanGeometry, beanMaterial, wireframeMesh;
-let axesHelper = null;
 let gui = null;
+let multiBeans = [];
+let cmykController = null;  // Reference to update checkbox when multi-bean mode toggles CMYK
 
 // ============================================
 // INITIALIZATION
@@ -63,28 +76,30 @@ function init() {
   const canvas = document.getElementById('bean-canvas');
   if (!canvas) return;
 
-  // Scene
+  // Scene (no background - use CSS background for dot pattern, allows CMYK alpha edge detection)
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(CONFIG.backgroundColor);
 
   // Camera
   const aspect = window.innerWidth / window.innerHeight;
   camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 100);
   camera.position.set(0, 0, 3);
 
-  // Renderer
+  // Renderer (alpha: true required for CMYK edge effect to work)
   renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: true
+    antialias: true,
+    alpha: true
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
 
   // Post-processing
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
   cmykPass = new ShaderPass(CMYKShader);
   cmykPass.renderToScreen = true;
+  cmykPass.enabled = CONFIG.cmykEnabled;  // Off by default for sculpting
   composer.addPass(cmykPass);
 
   // OrbitControls for mouse rotation
@@ -144,10 +159,18 @@ function addResetButton(folder, callback) {
   }}, 'reset').name('↺ Reset');
 }
 
-// Export current config as JS object (only changed values)
+// View-only keys to exclude from export (not part of bean model)
+const VIEW_KEYS = [
+  'autoRotate', 'showWireframe', 'backgroundColor', 'cmykEnabled',
+  'multiBeanMode', 'beanCount', 'scaleMin', 'scaleMax',
+  'spreadX', 'spreadY', 'depthMin', 'depthMax', 'driftSpeed', 'rotationSpeed'
+];
+
+// Export current config as JS object (only changed values, excluding view settings)
 function exportConfig() {
   const changes = {};
   for (const key in CONFIG) {
+    if (VIEW_KEYS.includes(key)) continue;
     if (JSON.stringify(CONFIG[key]) !== JSON.stringify(INITIAL_CONFIG[key])) {
       changes[key] = CONFIG[key];
     }
@@ -181,23 +204,18 @@ function setupGUI() {
 
   // View Controls
   const viewFolder = gui.addFolder('View');
+  viewFolder.add(CONFIG, 'multiBeanMode').name('🫘 Multi-Bean Mode').onChange(toggleMultiBeanMode);
+  cmykController = viewFolder.add(CONFIG, 'cmykEnabled').name('✨ CMYK Halo').onChange(v => {
+    cmykPass.enabled = v;
+  });
   viewFolder.add(CONFIG, 'autoRotate').name('Auto Rotate').onChange(v => {
     controls.autoRotate = v;
   });
   viewFolder.add(CONFIG, 'showWireframe').name('Wireframe').onChange(v => {
-    wireframeMesh.visible = v;
-  });
-  viewFolder.add(CONFIG, 'showAxes').name('Show Axes').onChange(v => {
-    if (v && !axesHelper) {
-      axesHelper = new THREE.AxesHelper(1.5);
-      scene.add(axesHelper);
-    } else if (!v && axesHelper) {
-      scene.remove(axesHelper);
-      axesHelper = null;
-    }
+    wireframeMesh.visible = v && !CONFIG.multiBeanMode;
   });
   viewFolder.addColor(CONFIG, 'backgroundColor').name('Background').onChange(v => {
-    scene.background.set(v);
+    document.body.style.backgroundColor = v;
   });
   viewFolder.add({ resetCamera: () => {
     camera.position.set(0.25, 0, 3);
@@ -205,15 +223,14 @@ function setupGUI() {
     controls.update();
   }}, 'resetCamera').name('Reset Camera');
   addResetButton(viewFolder, () => {
-    scene.background.set(CONFIG.backgroundColor);
+    document.body.style.backgroundColor = CONFIG.backgroundColor;
     controls.autoRotate = CONFIG.autoRotate;
     wireframeMesh.visible = CONFIG.showWireframe;
-    if (axesHelper) { scene.remove(axesHelper); axesHelper = null; }
   });
   viewFolder.open();
 
-  // Bean Shape
-  const shapeFolder = gui.addFolder('Bean Shape');
+  // Bean Dimensions
+  const shapeFolder = gui.addFolder('Bean Dimensions');
   shapeFolder.add(CONFIG, 'beanScaleX', 0.3, 1, 0.01).name('Width').onChange(rebuildGeometry);
   shapeFolder.add(CONFIG, 'beanScaleY', 0.3, 1, 0.01).name('Length').onChange(rebuildGeometry);
   shapeFolder.add(CONFIG, 'beanScaleZ', 0.3, 1, 0.01).name('Thickness').onChange(rebuildGeometry);
@@ -228,9 +245,13 @@ function setupGUI() {
   creaseFolder.add(CONFIG, 'creaseLength', 0.3, 0.95, 0.01).name('Length').onChange(v => {
     beanMaterial.uniforms.creaseLength.value = v;
   });
+  creaseFolder.add(CONFIG, 'creaseRadius', 0, 0.1, 0.005).name('Radius').onChange(v => {
+    beanMaterial.uniforms.creaseRadius.value = v;
+  });
   addResetButton(creaseFolder, () => {
     beanMaterial.uniforms.creaseWidth.value = CONFIG.creaseWidth;
     beanMaterial.uniforms.creaseLength.value = CONFIG.creaseLength;
+    beanMaterial.uniforms.creaseRadius.value = CONFIG.creaseRadius;
   });
 
   // Style
@@ -329,7 +350,7 @@ function syncUniforms() {
   beanMaterial.uniforms.highlightColor.value.set(CONFIG.highlightColor);
   beanMaterial.uniforms.creaseColor.value.set(CONFIG.creaseColor);
   beanMaterial.uniforms.lightDir.value.set(CONFIG.lightX, CONFIG.lightY, CONFIG.lightZ).normalize();
-  scene.background.set(CONFIG.backgroundColor);
+  document.body.style.backgroundColor = CONFIG.backgroundColor;
   controls.autoRotate = CONFIG.autoRotate;
   wireframeMesh.visible = CONFIG.showWireframe;
 }
@@ -359,6 +380,253 @@ function rebuildGeometry() {
   beanGeometry = createBeanGeometry(CONFIG);
   bean.geometry = beanGeometry;
   wireframeMesh.geometry = beanGeometry;
+  // Update multi-beans if in that mode
+  multiBeans.forEach(b => { b.geometry = beanGeometry; });
+}
+
+// ============================================
+// MULTI-BEAN MODE
+// ============================================
+let isTransitioning = false;
+
+function toggleMultiBeanMode(enabled) {
+  if (isTransitioning) return;
+  isTransitioning = true;
+
+  if (enabled) {
+    transitionToMultiBean();
+  } else {
+    transitionToSingleBean();
+  }
+}
+
+function transitionToMultiBean() {
+  // Disable controls during transition
+  controls.enabled = false;
+  wireframeMesh.visible = false;
+
+  // Enable CMYK effect
+  CONFIG.cmykEnabled = true;
+  cmykPass.enabled = true;
+  if (cmykController) cmykController.updateDisplay();
+
+  // Create beans but start them at scale 0
+  createMultiBeans(true); // true = start hidden
+
+  // Create animation timeline
+  const tl = gsap.timeline({
+    onComplete: () => { isTransitioning = false; }
+  });
+
+  // Animate hero bean to a random multi-bean scale and let it drift into the crowd
+  const heroTargetScale = CONFIG.scaleMin + Math.random() * (CONFIG.scaleMax - CONFIG.scaleMin);
+  bean.userData = {
+    targetScale: heroTargetScale,
+    vx: (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015,
+    vy: (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015,
+    vrx: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
+    vry: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
+    vrz: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
+    isHero: true
+  };
+
+  // Shrink hero bean to multi-bean size
+  tl.to(bean.scale, {
+    x: heroTargetScale,
+    y: heroTargetScale,
+    z: heroTargetScale,
+    duration: 0.6,
+    ease: 'power2.inOut'
+  }, 0);
+
+  // Move hero bean toward center as camera zooms out
+  tl.to(bean.position, {
+    x: (Math.random() - 0.5) * 2,
+    y: (Math.random() - 0.5) * 2,
+    z: CONFIG.depthMin + Math.random() * (CONFIG.depthMax - CONFIG.depthMin),
+    duration: 0.8,
+    ease: 'power2.inOut'
+  }, 0);
+
+  // Zoom camera out to multi-view
+  tl.to(camera.position, {
+    x: 0, y: 0, z: 12,
+    duration: 0.8,
+    ease: 'power2.inOut'
+  }, 0);
+
+  tl.to(controls.target, {
+    x: 0, y: 0, z: 0,
+    duration: 0.8,
+    ease: 'power2.inOut',
+    onUpdate: () => controls.update()
+  }, 0);
+
+  // Staggered reveal of multi-beans alongside hero (fast stagger)
+  const shuffled = [...multiBeans].sort(() => Math.random() - 0.5);
+  shuffled.forEach((b, i) => {
+    tl.to(b.scale, {
+      x: b.userData.targetScale,
+      y: b.userData.targetScale,
+      z: b.userData.targetScale,
+      duration: 0.4,
+      ease: 'elastic.out(1, 0.5)'
+    }, 0.15 + i * 0.002);
+  });
+}
+
+function transitionToSingleBean() {
+  // Always zoom back to the original hero bean
+  const chosenHero = bean;
+
+  // Disable CMYK effect
+  CONFIG.cmykEnabled = false;
+  cmykPass.enabled = false;
+  if (cmykController) cmykController.updateDisplay();
+
+  // Normalize rotation for shortest path to upright position
+  const normalizeAngle = (angle) => {
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    return angle;
+  };
+  chosenHero.rotation.x = normalizeAngle(chosenHero.rotation.x);
+  chosenHero.rotation.y = normalizeAngle(chosenHero.rotation.y);
+  chosenHero.rotation.z = normalizeAngle(chosenHero.rotation.z);
+
+  // Capture hero's current position for camera targeting
+  const heroStartPos = chosenHero.position.clone();
+
+  // Create animation timeline
+  const tl = gsap.timeline({
+    onComplete: () => {
+      clearMultiBeans();
+      controls.enabled = true;
+      wireframeMesh.visible = CONFIG.showWireframe;
+      isTransitioning = false;
+    }
+  });
+
+  // Shrink other beans quickly
+  const shuffled = [...multiBeans].sort(() => Math.random() - 0.5);
+  shuffled.forEach((b, i) => {
+    tl.to(b.scale, {
+      x: 0, y: 0, z: 0,
+      duration: 0.3,
+      ease: 'power2.in'
+    }, i * 0.002);
+  });
+
+  // All animations happen simultaneously:
+  // - Camera zooms from current position to final position (passing through hero's area)
+  // - Hero scales up, moves to center, and rotates to face camera
+  const duration = 1.2;
+
+  // Camera moves directly to final position
+  tl.to(camera.position, {
+    x: 0.25, y: 0, z: 3,
+    duration: duration,
+    ease: 'power2.inOut'
+  }, 0);
+
+  tl.to(controls.target, {
+    x: 0.25, y: 0, z: 0,
+    duration: duration,
+    ease: 'power2.inOut',
+    onUpdate: () => controls.update()
+  }, 0);
+
+  // Hero scales up
+  tl.to(chosenHero.scale, {
+    x: 1, y: 1, z: 1,
+    duration: duration,
+    ease: 'power2.inOut'
+  }, 0);
+
+  // Hero moves to center
+  tl.to(bean.position, {
+    x: 0, y: 0, z: 0,
+    duration: duration,
+    ease: 'power2.inOut'
+  }, 0);
+
+  // Hero rotates to face camera
+  tl.to(chosenHero.rotation, {
+    x: 0, y: 0, z: 0,
+    duration: duration,
+    ease: 'power2.inOut'
+  }, 0);
+}
+
+function createMultiBeans(startHidden = false) {
+  for (let i = 0; i < CONFIG.beanCount; i++) {
+    const multiBean = new THREE.Mesh(beanGeometry, beanMaterial);
+
+    multiBean.position.set(
+      (Math.random() - 0.5) * CONFIG.spreadX * 2,
+      (Math.random() - 0.5) * CONFIG.spreadY * 2,
+      CONFIG.depthMin + Math.random() * (CONFIG.depthMax - CONFIG.depthMin)
+    );
+
+    multiBean.rotation.set(
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2
+    );
+
+    const targetScale = CONFIG.scaleMin + Math.random() * (CONFIG.scaleMax - CONFIG.scaleMin);
+
+    // Start at 0 scale if animating in, otherwise full scale
+    if (startHidden) {
+      multiBean.scale.setScalar(0);
+    } else {
+      multiBean.scale.setScalar(targetScale);
+    }
+
+    multiBean.userData = {
+      targetScale,
+      vx: (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015,
+      vy: (Math.random() - 0.5) * CONFIG.driftSpeed * 0.015,
+      vrx: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
+      vry: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008,
+      vrz: (Math.random() - 0.5) * CONFIG.rotationSpeed * 0.008
+    };
+
+    scene.add(multiBean);
+    multiBeans.push(multiBean);
+  }
+}
+
+function clearMultiBeans() {
+  multiBeans.forEach(b => {
+    gsap.killTweensOf(b.scale);
+    scene.remove(b);
+  });
+  multiBeans = [];
+}
+
+function animateMultiBeans() {
+  // Animate all beans including the hero
+  const allBeans = [bean, ...multiBeans];
+  allBeans.forEach(b => {
+    if (!b.userData || !b.userData.vx) return; // Skip if no velocity data
+
+    const { vx, vy, vrx, vry, vrz } = b.userData;
+
+    b.position.x += vx;
+    b.position.y += vy;
+    b.rotation.x += vrx;
+    b.rotation.y += vry;
+    b.rotation.z += vrz;
+
+    // Wrap around bounds
+    const boundX = CONFIG.spreadX + 2;
+    const boundY = CONFIG.spreadY + 2;
+    if (b.position.x > boundX) b.position.x = -boundX;
+    if (b.position.x < -boundX) b.position.x = boundX;
+    if (b.position.y > boundY) b.position.y = -boundY;
+    if (b.position.y < -boundY) b.position.y = boundY;
+  });
 }
 
 // ============================================
@@ -369,6 +637,11 @@ function animate() {
 
   // Update CMYK time for animated effect
   cmykPass.uniforms.time.value += 0.016;
+
+  // Animate multi-beans if in that mode
+  if (CONFIG.multiBeanMode) {
+    animateMultiBeans();
+  }
 
   // Update controls
   controls.update();

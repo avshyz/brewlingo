@@ -15,6 +15,7 @@ export const BEAN_CONFIG = {
   // Crease
   creaseWidth: 0.035,
   creaseLength: 0.7,
+  creaseRadius: 0.02,      // Rounded ends (0 = sharp, higher = more rounded)
   // Cel-shading settings
   toonEnabled: false,
   rimEnabled: false,
@@ -136,6 +137,7 @@ export function createBeanShaderUniforms(config = BEAN_CONFIG) {
   return {
     creaseWidth: { value: config.creaseWidth },
     creaseLength: { value: config.creaseLength },
+    creaseRadius: { value: config.creaseRadius },
     lightDir: { value: new THREE.Vector3(config.lightX, config.lightY, config.lightZ).normalize() },
     colorEnabled: { value: config.colorEnabled ? 1.0 : 0.0 },
     toonEnabled: { value: config.toonEnabled ? 1.0 : 0.0 },
@@ -173,6 +175,7 @@ export const BeanShaderVertexShader = `
 export const BeanShaderFragmentShader = `
   uniform float creaseWidth;
   uniform float creaseLength;
+  uniform float creaseRadius;
   uniform vec3 lightDir;
   uniform float colorEnabled;
   uniform float toonEnabled;
@@ -228,11 +231,15 @@ export const BeanShaderFragmentShader = `
       color = color + specColor;
     }
 
+    // Rounded rectangle SDF for crease
     float u = vUvParams.x;
     float v = vUvParams.y;
-    float inWidth = step(abs(u), creaseWidth);
-    float inLength = step(abs(v), creaseLength);
-    float creaseLine = inWidth * inLength;
+    // Distance from point to rounded rectangle
+    vec2 p = abs(vec2(u, v));
+    vec2 size = vec2(creaseWidth, creaseLength);
+    vec2 q = p - size + creaseRadius;
+    float dist = min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - creaseRadius;
+    float creaseLine = 1.0 - step(0.0, dist);
     creaseLine *= step(0.0, vPosition.z);
     color = mix(color, effCreaseColor, creaseLine);
     color = clamp(color, 0.0, 1.0);
