@@ -18,7 +18,6 @@ export default defineConfig({
         main: resolve(__dirname, 'src/index.html'),
         language: resolve(__dirname, 'src/language.html'),
         recipe: resolve(__dirname, 'src/recipe.html'),
-        'debug-bean': resolve(__dirname, 'src/debug-bean.html'),
       },
     },
   },

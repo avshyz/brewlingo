@@ -262,24 +262,3 @@ export const BACKGROUND_BEANS_CONFIG = {
   cmykOffset: 0.0005,
 };
 
-// ============================================
-// DEBUG BEAN CONFIG (debug-bean.html)
-// ============================================
-export const DEBUG_BEAN_CONFIG = {
-  // View options
-  autoRotate: false,
-  showWireframe: false,
-  backgroundColor: "#ffffff",
-  cmykEnabled: false,
-  // Multi-bean mode settings
-  multiBeanMode: false,
-  beanCount: 200,
-  scaleMin: 0.05,
-  scaleMax: 0.48,
-  spreadX: 12,
-  spreadY: 8,
-  depthMin: -5,
-  depthMax: 2,
-  driftSpeed: 0.5,
-  rotationSpeed: 3,
-};
