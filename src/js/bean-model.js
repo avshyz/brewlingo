@@ -24,21 +24,21 @@ export const BEAN_CONFIG = {
   creaseWidth: 0.027,
   creaseLength: 0.7,
   creaseRadius: 0.02,      // Rounded ends (0 = sharp, higher = more rounded)
-  // Cel-shading settings
-  toonEnabled: false,
-  rimEnabled: false,
+  // Cel-shading settings (blend preset defaults)
+  toonEnabled: true,
+  rimEnabled: true,
   specularEnabled: true,
-  rimPower: 2.0,
-  rimIntensity: 0.6,
+  rimPower: 5,
+  rimIntensity: 1.15,
   toonBands: 3,
-  specularPower: 64.0,
-  specularThreshold: 0.5,
-  specularIntensity: 0.8,
+  specularPower: 36,
+  specularThreshold: 0.25,
+  specularIntensity: 0.5,
   lightX: 0.5,
   lightY: 1.0,
   lightZ: 0.3,
-  // Bean colors
-  colorEnabled: false,
+  // Bean colors (blend preset defaults)
+  colorEnabled: true,
   baseColor: '#C4A484',      // Light roasted coffee
   highlightColor: '#E8DCC4', // Warm cream highlight
   creaseColor: '#E5D9C3',    // Light brown-beige crease

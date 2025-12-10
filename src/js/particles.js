@@ -36,7 +36,7 @@ const CONFIG = {
   showUI: true,           // Show landing card UI
   cmykEnabled: true,      // CMYK on by default for landing
   wireframe: false,       // Show wireframe mesh
-  preset: 'modern',       // Visual preset (classic, modern, lively)
+  preset: 'blend',        // Visual preset (classic, modern, singleOrigin, blend)
   geometryType: GEOMETRY_TYPES.SUPERELLIPSE,  // Bean geometry style
   // Landing card transition settings
   cardFadeScale: 2,           // Scale factor when card fades out
@@ -64,7 +64,7 @@ const CONFIG = {
   // Roast level theme selector
   roastLevel: 'light',
   // Blend mode - each bean gets a random roast color
-  blendMode: false
+  blendMode: true
 };
 
 // Store initial config for reset/export functionality
