@@ -323,6 +323,27 @@ function syncUniforms() {
   cmykPass.uniforms.breatheSpeed.value = CONFIG.cmykBreatheSpeed;
 }
 
+// Helper to update a uniform on all bean materials (shared + cloned in blend mode)
+function updateAllBeanUniforms(uniformName, value) {
+  beanMaterial.uniforms[uniformName].value = value;
+  // Also update cloned materials on individual beans (for blend mode)
+  beans.forEach(bean => {
+    if (bean.material !== beanMaterial && bean.material.uniforms[uniformName]) {
+      bean.material.uniforms[uniformName].value = value;
+    }
+  });
+}
+
+// Helper to set a Color uniform on all bean materials
+function updateAllBeanColorUniform(uniformName, colorValue) {
+  beanMaterial.uniforms[uniformName].value.set(colorValue);
+  beans.forEach(bean => {
+    if (bean.material !== beanMaterial && bean.material.uniforms[uniformName]) {
+      bean.material.uniforms[uniformName].value.set(colorValue);
+    }
+  });
+}
+
 // Helper to create a folder with persistent open/close state
 function createFolder(parent, name, defaultOpen = false) {
   const folder = parent.addFolder(name);
@@ -451,11 +472,11 @@ function applyPreset(presetName) {
   const blendModeChanged = CONFIG.blendMode !== preset.blendMode;
   CONFIG.blendMode = preset.blendMode;
 
-  // Update uniforms
-  beanMaterial.uniforms.toonEnabled.value = preset.toonEnabled ? 1.0 : 0.0;
-  beanMaterial.uniforms.rimEnabled.value = preset.rimEnabled ? 1.0 : 0.0;
-  beanMaterial.uniforms.specularEnabled.value = preset.specularEnabled ? 1.0 : 0.0;
-  beanMaterial.uniforms.colorEnabled.value = preset.colorEnabled ? 1.0 : 0.0;
+  // Update uniforms on all beans (important for blend mode)
+  updateAllBeanUniforms('toonEnabled', preset.toonEnabled ? 1.0 : 0.0);
+  updateAllBeanUniforms('rimEnabled', preset.rimEnabled ? 1.0 : 0.0);
+  updateAllBeanUniforms('specularEnabled', preset.specularEnabled ? 1.0 : 0.0);
+  updateAllBeanUniforms('colorEnabled', preset.colorEnabled ? 1.0 : 0.0);
 
   // Rebuild geometry for new type (also resets beans if blendMode changed)
   if (blendModeChanged) {
@@ -646,14 +667,14 @@ function setupGUI() {
 
   const creaseSub = createFolder(beanFolder, 'Crease');
   creaseSub.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.001).name('Width').onChange(v => {
-    beanMaterial.uniforms.creaseWidth.value = v;
+    updateAllBeanUniforms('creaseWidth', v);
   });
   creaseSub.add(CONFIG, 'creaseLength', 0.3, 0.95, 0.01).name('Length').onChange(v => {
-    beanMaterial.uniforms.creaseLength.value = v;
+    updateAllBeanUniforms('creaseLength', v);
   });
   addResetButton(creaseSub, () => {
-    beanMaterial.uniforms.creaseWidth.value = CONFIG.creaseWidth;
-    beanMaterial.uniforms.creaseLength.value = CONFIG.creaseLength;
+    updateAllBeanUniforms('creaseWidth', CONFIG.creaseWidth);
+    updateAllBeanUniforms('creaseLength', CONFIG.creaseLength);
   });
 
   // ============================================
@@ -664,7 +685,7 @@ function setupGUI() {
   // Colors subfolder
   const colorSub = createFolder(styleFolder, 'Colors');
   colorSub.add(CONFIG, 'colorEnabled').name('Enable').onChange(v => {
-    beanMaterial.uniforms.colorEnabled.value = v ? 1.0 : 0.0;
+    updateAllBeanUniforms('colorEnabled', v ? 1.0 : 0.0);
   });
   colorSub.addColor(CONFIG, 'baseColor').name('Bean').onChange(v => {
     beanMaterial.uniforms.baseColor.value.set(v);
@@ -676,7 +697,7 @@ function setupGUI() {
     beanMaterial.uniforms.creaseColor.value.set(v);
   });
   addResetButton(colorSub, () => {
-    beanMaterial.uniforms.colorEnabled.value = CONFIG.colorEnabled ? 1.0 : 0.0;
+    updateAllBeanUniforms('colorEnabled', CONFIG.colorEnabled ? 1.0 : 0.0);
     beanMaterial.uniforms.baseColor.value.set(CONFIG.baseColor);
     beanMaterial.uniforms.highlightColor.value.set(CONFIG.highlightColor);
     beanMaterial.uniforms.creaseColor.value.set(CONFIG.creaseColor);
@@ -685,48 +706,54 @@ function setupGUI() {
   // Cel Shading subfolder
   const celSub = createFolder(styleFolder, 'Cel Shading');
   celSub.add(CONFIG, 'toonEnabled').name('☀ Toon').onChange(v => {
-    beanMaterial.uniforms.toonEnabled.value = v ? 1.0 : 0.0;
+    updateAllBeanUniforms('toonEnabled', v ? 1.0 : 0.0);
   });
   celSub.add(CONFIG, 'toonBands', 1, 6, 1).name('Bands').onChange(v => {
-    beanMaterial.uniforms.toonBands.value = v;
+    updateAllBeanUniforms('toonBands', v);
   });
   celSub.add(CONFIG, 'rimEnabled').name('✨ Rim').onChange(v => {
-    beanMaterial.uniforms.rimEnabled.value = v ? 1.0 : 0.0;
+    updateAllBeanUniforms('rimEnabled', v ? 1.0 : 0.0);
   });
   celSub.add(CONFIG, 'rimIntensity', 0, 1.5, 0.05).name('Rim Intensity').onChange(v => {
-    beanMaterial.uniforms.rimIntensity.value = v;
+    updateAllBeanUniforms('rimIntensity', v);
   });
   celSub.add(CONFIG, 'rimPower', 0.5, 5, 0.1).name('Rim Sharpness').onChange(v => {
-    beanMaterial.uniforms.rimPower.value = v;
+    updateAllBeanUniforms('rimPower', v);
   });
   celSub.add(CONFIG, 'specularEnabled').name('💫 Specular').onChange(v => {
-    beanMaterial.uniforms.specularEnabled.value = v ? 1.0 : 0.0;
+    updateAllBeanUniforms('specularEnabled', v ? 1.0 : 0.0);
   });
   celSub.add(CONFIG, 'specularIntensity', 0, 1.5, 0.05).name('Spec Intensity').onChange(v => {
-    beanMaterial.uniforms.specularIntensity.value = v;
+    updateAllBeanUniforms('specularIntensity', v);
   });
   celSub.add(CONFIG, 'specularThreshold', 0.1, 0.9, 0.05).name('Spec Threshold').onChange(v => {
-    beanMaterial.uniforms.specularThreshold.value = v;
+    updateAllBeanUniforms('specularThreshold', v);
   });
   celSub.add(CONFIG, 'specularPower', 8, 128, 4).name('Spec Sharpness').onChange(v => {
-    beanMaterial.uniforms.specularPower.value = v;
+    updateAllBeanUniforms('specularPower', v);
   });
   addResetButton(celSub, () => {
-    beanMaterial.uniforms.toonEnabled.value = CONFIG.toonEnabled ? 1.0 : 0.0;
-    beanMaterial.uniforms.toonBands.value = CONFIG.toonBands;
-    beanMaterial.uniforms.rimEnabled.value = CONFIG.rimEnabled ? 1.0 : 0.0;
-    beanMaterial.uniforms.rimIntensity.value = CONFIG.rimIntensity;
-    beanMaterial.uniforms.rimPower.value = CONFIG.rimPower;
-    beanMaterial.uniforms.specularEnabled.value = CONFIG.specularEnabled ? 1.0 : 0.0;
-    beanMaterial.uniforms.specularIntensity.value = CONFIG.specularIntensity;
-    beanMaterial.uniforms.specularThreshold.value = CONFIG.specularThreshold;
-    beanMaterial.uniforms.specularPower.value = CONFIG.specularPower;
+    updateAllBeanUniforms('toonEnabled', CONFIG.toonEnabled ? 1.0 : 0.0);
+    updateAllBeanUniforms('toonBands', CONFIG.toonBands);
+    updateAllBeanUniforms('rimEnabled', CONFIG.rimEnabled ? 1.0 : 0.0);
+    updateAllBeanUniforms('rimIntensity', CONFIG.rimIntensity);
+    updateAllBeanUniforms('rimPower', CONFIG.rimPower);
+    updateAllBeanUniforms('specularEnabled', CONFIG.specularEnabled ? 1.0 : 0.0);
+    updateAllBeanUniforms('specularIntensity', CONFIG.specularIntensity);
+    updateAllBeanUniforms('specularThreshold', CONFIG.specularThreshold);
+    updateAllBeanUniforms('specularPower', CONFIG.specularPower);
   });
 
   // Light Direction subfolder
   const lightSub = createFolder(styleFolder, 'Light Direction');
   const updateLightDir = () => {
-    beanMaterial.uniforms.lightDir.value.set(CONFIG.lightX, CONFIG.lightY, CONFIG.lightZ).normalize();
+    const lightDir = new THREE.Vector3(CONFIG.lightX, CONFIG.lightY, CONFIG.lightZ).normalize();
+    beanMaterial.uniforms.lightDir.value.copy(lightDir);
+    beans.forEach(bean => {
+      if (bean.material !== beanMaterial && bean.material.uniforms.lightDir) {
+        bean.material.uniforms.lightDir.value.copy(lightDir);
+      }
+    });
   };
   lightSub.add(CONFIG, 'lightX', -1, 1, 0.1).name('X').onChange(updateLightDir);
   lightSub.add(CONFIG, 'lightY', -1, 1, 0.1).name('Y').onChange(updateLightDir);
