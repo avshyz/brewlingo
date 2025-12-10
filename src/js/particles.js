@@ -437,16 +437,28 @@ const PRESETS = {
   singleOrigin: {
     geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
     toonEnabled: true,
+    toonBands: 3,
     rimEnabled: true,
+    rimIntensity: 1.15,
+    rimPower: 5,
     specularEnabled: true,
+    specularIntensity: 0.5,
+    specularThreshold: 0.25,
+    specularPower: 36,
     colorEnabled: true,
     blendMode: false
   },
   blend: {
     geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
     toonEnabled: true,
+    toonBands: 3,
     rimEnabled: true,
+    rimIntensity: 1.15,
+    rimPower: 5,
     specularEnabled: true,
+    specularIntensity: 0.5,
+    specularThreshold: 0.25,
+    specularPower: 36,
     colorEnabled: true,
     blendMode: true
   }
@@ -472,11 +484,27 @@ function applyPreset(presetName) {
   const blendModeChanged = CONFIG.blendMode !== preset.blendMode;
   CONFIG.blendMode = preset.blendMode;
 
+  // Apply cel shading parameters if specified in preset
+  if (preset.toonBands !== undefined) CONFIG.toonBands = preset.toonBands;
+  if (preset.rimIntensity !== undefined) CONFIG.rimIntensity = preset.rimIntensity;
+  if (preset.rimPower !== undefined) CONFIG.rimPower = preset.rimPower;
+  if (preset.specularIntensity !== undefined) CONFIG.specularIntensity = preset.specularIntensity;
+  if (preset.specularThreshold !== undefined) CONFIG.specularThreshold = preset.specularThreshold;
+  if (preset.specularPower !== undefined) CONFIG.specularPower = preset.specularPower;
+
   // Update uniforms on all beans (important for blend mode)
   updateAllBeanUniforms('toonEnabled', preset.toonEnabled ? 1.0 : 0.0);
   updateAllBeanUniforms('rimEnabled', preset.rimEnabled ? 1.0 : 0.0);
   updateAllBeanUniforms('specularEnabled', preset.specularEnabled ? 1.0 : 0.0);
   updateAllBeanUniforms('colorEnabled', preset.colorEnabled ? 1.0 : 0.0);
+
+  // Update cel shading parameter uniforms
+  if (preset.toonBands !== undefined) updateAllBeanUniforms('toonBands', preset.toonBands);
+  if (preset.rimIntensity !== undefined) updateAllBeanUniforms('rimIntensity', preset.rimIntensity);
+  if (preset.rimPower !== undefined) updateAllBeanUniforms('rimPower', preset.rimPower);
+  if (preset.specularIntensity !== undefined) updateAllBeanUniforms('specularIntensity', preset.specularIntensity);
+  if (preset.specularThreshold !== undefined) updateAllBeanUniforms('specularThreshold', preset.specularThreshold);
+  if (preset.specularPower !== undefined) updateAllBeanUniforms('specularPower', preset.specularPower);
 
   // Rebuild geometry for new type (also resets beans if blendMode changed)
   if (blendModeChanged) {
@@ -489,7 +517,9 @@ function applyPreset(presetName) {
   if (gui) {
     gui.controllersRecursive().forEach(c => {
       if (['geometryType', 'beanScaleX', 'beanScaleY', 'beanScaleZ',
-           'toonEnabled', 'rimEnabled', 'specularEnabled', 'colorEnabled'].includes(c.property)) {
+           'toonEnabled', 'rimEnabled', 'specularEnabled', 'colorEnabled',
+           'toonBands', 'rimIntensity', 'rimPower',
+           'specularIntensity', 'specularThreshold', 'specularPower'].includes(c.property)) {
         c.updateDisplay();
       }
     });
