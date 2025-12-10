@@ -376,6 +376,10 @@ header {
     }
   }
 
+  &.dialog-source {
+    visibility: hidden;
+  }
+
   &[data-color="yellow"] .card-icon i { color: var(--yellow); }
   &[data-color="yellow"]:hover .card-toggle { background: var(--yellow); }
   &[data-color="pink"] .card-icon i { color: var(--pink); }

@@ -18,6 +18,8 @@ const colorMap = {
   amber: 'var(--amber)'
 };
 
+const isMobile = () => window.innerWidth <= 500;
+
 function setChipTransitionNames(card, dialogEl) {
   // Set transition names on chips in card
   const chips = card.querySelectorAll('.chip[data-value]');
@@ -80,6 +82,7 @@ function openDialog(card) {
       // In callback: remove from card, add to dialog
       // This makes dialog the "new" state target
       card.classList.remove('transitioning');
+      if (!isMobile()) card.classList.add('dialog-source');
       dialog.classList.add('transitioning');
       document.body.classList.add('dialog-open');
       dialog.showModal();
@@ -124,6 +127,7 @@ function closeDialog() {
       // In callback: remove from dialog, add to card
       // This makes card the "new" state target
       dialog.classList.remove('transitioning');
+      activeCard.classList.remove('dialog-source');
       activeCard.classList.add('transitioning', 'closing');
       dialog.close();
       document.body.classList.remove('dialog-open');
@@ -137,6 +141,7 @@ function closeDialog() {
     });
   } else {
     // Fallback
+    if (activeCard) activeCard.classList.remove('dialog-source');
     dialog.classList.add('closing');
     dialog.addEventListener('animationend', () => {
       dialog.classList.remove('closing');
