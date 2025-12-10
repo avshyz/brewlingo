@@ -119,6 +119,11 @@ html {
         transparent 1px
     );
     background-size: 20px 20px;
+
+    /* Remove CSS dots when 3D background is active (dots rendered in Three.js) */
+    &:has(#background-canvas) {
+        background-image: none;
+    }
 }
 
 body {
@@ -130,6 +135,18 @@ body {
     &.dialog-open {
         overflow: hidden;
     }
+}
+
+/* BACKGROUND CANVAS (parallax 3D beans) */
+#background-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100lvh;
+    z-index: 0;
+    pointer-events: none;
 }
 
 /* MARQUEE BANNER */
@@ -184,6 +201,8 @@ body {
     max-width: var(--view-width);
     margin: 0 auto;
     padding: 0 var(--view-padding);
+    position: relative;
+    z-index: 1;
 }
 
 /* HEADER */
@@ -193,6 +212,7 @@ header {
     padding: 4.5rem 0 2.5rem;
     margin-bottom: 2rem;
     position: relative;
+    z-index: 1;
     border-bottom: 16px solid transparent;
     /* border-image-source is in frills.css (inlined data URI) */
     border-image-slice: 0 0 16 0;
@@ -1163,6 +1183,8 @@ footer {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.75rem;
+    position: relative;
+    z-index: 1;
     background: linear-gradient(
         90deg,
         #000 0%,
