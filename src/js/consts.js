@@ -229,13 +229,13 @@ export const LANDING_PAGE_CONFIG = {
 // ============================================
 export const BACKGROUND_BEANS_CONFIG = {
   // Bean count
-  beanCountDesktop: 80,
+  beanCountDesktop: 60,
   beanCountMobile: 80,
   // Spawn area
   spreadX: 14,
   spreadY: 10,
-  depthMin: -6,
-  depthMax: 4,
+  depthMin: -4,
+  depthMax: 5,
   // Scale range
   scaleMin: 0.08,
   scaleMax: 0.35,
