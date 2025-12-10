@@ -37,9 +37,26 @@ export const ROAST_LEVELS = {
   }
 };
 
-// Get all roast levels except green (for Bean Bag preset)
+// Get all roast levels with weighted probabilities for Blend preset
+// Dark has 1/3 probability, green has 1/10 probability relative to others
 export function getColoredRoastLevels() {
-  return Object.entries(ROAST_LEVELS)
-    .filter(([key]) => key !== 'green')
-    .map(([, value]) => value);
+  const weighted = [];
+  const baseWeight = 30; // LCM-friendly base for clean ratios
+
+  Object.entries(ROAST_LEVELS).forEach(([key, value]) => {
+    let count;
+    if (key === 'green') {
+      count = baseWeight / 10; // 1/10 probability
+    } else if (key === 'dark') {
+      count = baseWeight / 3;  // 1/3 probability
+    } else {
+      count = baseWeight;      // full probability
+    }
+
+    for (let i = 0; i < count; i++) {
+      weighted.push(value);
+    }
+  });
+
+  return weighted;
 }
