@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/banner.svg" alt="Brewlingo banner">
+</p>
+
 # Brewlingo
 
 A coffee vocabulary and recipe reference app for baristas.

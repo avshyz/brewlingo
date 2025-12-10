@@ -20,6 +20,7 @@ const OG_HEIGHT = 630;
 const BEAN_SIZE = 280;
 const DOT_SPACING = 35;
 const DOT_SIZE = 4;
+const BANNER_PATH = path.join(__dirname, '..', 'public', 'banner.svg');
 
 async function generateOGImage() {
   const svgPath = path.join(__dirname, '..', 'public', 'assets', 'favicon.svg');
@@ -117,6 +118,32 @@ async function generateOGImage() {
 
   console.log(`✓ Generated OG image: ${outputPath}`);
   console.log(`  Size: ${OG_WIDTH}x${OG_HEIGHT}px`);
+
+  // Generate the SVG banner
+  const beanX = (OG_WIDTH - BEAN_SIZE) / 2;
+  const beanY = (OG_HEIGHT - BEAN_SIZE) / 2;
+
+  const bannerSvg = `<svg width="${OG_WIDTH}" height="${OG_HEIGHT}" viewBox="0 0 ${OG_WIDTH} ${OG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="white"/>
+  <g class="dots">
+    ${dots.join('\n    ')}
+  </g>
+  <g transform="translate(${beanX}, ${beanY})">
+    <svg width="${BEAN_SIZE}" height="${BEAN_SIZE}" viewBox="0 0 52 52">
+      ${svgContent.replace(/<\/?svg[^>]*>/g, '')}
+    </svg>
+  </g>
+  <defs>
+    <radialGradient id="vignette" cx="50%" cy="50%" r="65%">
+      <stop offset="60%" stop-color="white" stop-opacity="0"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0.95"/>
+    </radialGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#vignette)"/>
+</svg>`;
+
+  fs.writeFileSync(BANNER_PATH, bannerSvg);
+  console.log(`✓ Generated banner: ${BANNER_PATH}`);
 }
 
 generateOGImage().catch(err => {
