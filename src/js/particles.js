@@ -21,6 +21,7 @@ import {
   CMYKShaderVertexShader,
   CMYKShaderFragmentShader
 } from './bean-model.js';
+import { ROAST_LEVELS, getColoredRoastLevels } from './consts.js';
 
 // ============================================
 // CONFIGURATION
@@ -61,7 +62,9 @@ const CONFIG = {
   // Import all bean shape/style settings from shared config
   ...BEAN_CONFIG,
   // Roast level theme selector
-  roastLevel: 'light'
+  roastLevel: 'light',
+  // Blend mode - each bean gets a random roast color
+  blendMode: false
 };
 
 // Store initial config for reset/export functionality
@@ -321,13 +324,19 @@ function syncUniforms() {
 }
 
 // Helper to create a folder with persistent open/close state
-function createFolder(parent, name) {
+function createFolder(parent, name, defaultOpen = false) {
   const folder = parent.addFolder(name);
   const state = getGuiState();
   const key = name.toLowerCase().replace(/\s+/g, '-');
 
-  // Restore saved state (default to closed)
-  if (state[key]) {
+  // Restore saved state, or use default if not in localStorage
+  if (key in state) {
+    if (state[key]) {
+      folder.open();
+    } else {
+      folder.close();
+    }
+  } else if (defaultOpen) {
     folder.open();
   } else {
     folder.close();
@@ -362,40 +371,6 @@ function toggleLandingCard(visible) {
   });
 }
 
-// Roast level color themes
-const ROAST_LEVELS = {
-  green: {
-    baseColor: '#7A9A6D',
-    highlightColor: '#B8C9A8',
-    creaseColor: '#5C7A4F'
-  },
-  ultralight: {
-    baseColor: '#C4A484',
-    highlightColor: '#E8DCC4',
-    creaseColor: '#D4C4A8'
-  },
-  light: {
-    baseColor: '#C4A484',
-    highlightColor: '#E8DCC4',
-    creaseColor: '#A08060'
-  },
-  mediumLight: {
-    baseColor: '#A68850',
-    highlightColor: '#D4BC8A',
-    creaseColor: '#7A6438'
-  },
-  medium: {
-    baseColor: '#8B6914',
-    highlightColor: '#C9A86C',
-    creaseColor: '#5C4A20'
-  },
-  dark: {
-    baseColor: '#5C4532',
-    highlightColor: '#8A7058',
-    creaseColor: '#3E2E22'
-  }
-};
-
 // Apply a roast level color theme
 function applyRoastLevel(level) {
   const roast = ROAST_LEVELS[level];
@@ -427,21 +402,32 @@ const PRESETS = {
     toonEnabled: false,
     rimEnabled: false,
     specularEnabled: false,
-    colorEnabled: false
+    colorEnabled: false,
+    blendMode: false
   },
   modern: {
     geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
     toonEnabled: false,
     rimEnabled: false,
     specularEnabled: true,
-    colorEnabled: false
+    colorEnabled: false,
+    blendMode: false
   },
-  lively: {
+  singleOrigin: {
     geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
     toonEnabled: true,
     rimEnabled: true,
     specularEnabled: true,
-    colorEnabled: true
+    colorEnabled: true,
+    blendMode: false
+  },
+  blend: {
+    geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
+    toonEnabled: true,
+    rimEnabled: true,
+    specularEnabled: true,
+    colorEnabled: true,
+    blendMode: true
   }
 };
 
@@ -462,6 +448,8 @@ function applyPreset(presetName) {
   CONFIG.rimEnabled = preset.rimEnabled;
   CONFIG.specularEnabled = preset.specularEnabled;
   CONFIG.colorEnabled = preset.colorEnabled;
+  const blendModeChanged = CONFIG.blendMode !== preset.blendMode;
+  CONFIG.blendMode = preset.blendMode;
 
   // Update uniforms
   beanMaterial.uniforms.toonEnabled.value = preset.toonEnabled ? 1.0 : 0.0;
@@ -469,8 +457,12 @@ function applyPreset(presetName) {
   beanMaterial.uniforms.specularEnabled.value = preset.specularEnabled ? 1.0 : 0.0;
   beanMaterial.uniforms.colorEnabled.value = preset.colorEnabled ? 1.0 : 0.0;
 
-  // Rebuild geometry for new type
-  rebuildGeometry();
+  // Rebuild geometry for new type (also resets beans if blendMode changed)
+  if (blendModeChanged) {
+    resetBeans();
+  } else {
+    rebuildGeometry();
+  }
 
   // Update all GUI controllers
   if (gui) {
@@ -478,6 +470,16 @@ function applyPreset(presetName) {
       if (['geometryType', 'beanScaleX', 'beanScaleY', 'beanScaleZ',
            'toonEnabled', 'rimEnabled', 'specularEnabled', 'colorEnabled'].includes(c.property)) {
         c.updateDisplay();
+      }
+    });
+    // Toggle kidney folder visibility based on geometry type
+    gui.foldersRecursive().forEach(f => {
+      if (f._title === 'Kidney Curve') {
+        if (preset.geometryType === GEOMETRY_TYPES.CLASSIC) {
+          f.hide();
+        } else {
+          f.show();
+        }
       }
     });
   }
@@ -530,7 +532,7 @@ function setupGUI() {
     return viewFolder.add(CONFIG, key);
   };
 
-  const viewFolder = createFolder(gui, '👁 View');
+  const viewFolder = createFolder(gui, '👁 View', true);
   addViewControl('singleBeanMode').name('🫘 Single Bean Mode').onChange(toggleSingleBeanMode);
   showUIController = addViewControl('showUI').name('👁 Show UI').onChange(toggleLandingCard);
   cmykController = addViewControl('cmykEnabled').name('✨ CMYK Halo').onChange(v => {
@@ -539,15 +541,16 @@ function setupGUI() {
   addViewControl('wireframe').name('🔲 Wireframe').onChange(v => {
     beanMaterial.wireframe = v;
   });
-  viewFolder.add(CONFIG, 'geometryType', {
+  const geometryTypeController = viewFolder.add(CONFIG, 'geometryType', {
     'Classic (ellipsoid)': GEOMETRY_TYPES.CLASSIC,
     'Superellipse (kidney)': GEOMETRY_TYPES.SUPERELLIPSE
-  }).name('🫘 Geometry').onChange(rebuildGeometry);
+  }).name('🫘 Geometry');
   viewKeys.add('geometryType');
   const presetController = viewFolder.add(CONFIG, 'preset', {
     'Classic': 'classic',
     'Modern': 'modern',
-    'Lively': 'lively'
+    'Single Origin': 'singleOrigin',
+    'Blend': 'blend'
   }).name('🎨 Preset').onChange(applyPreset);
   viewKeys.add('preset');
   const roastLevelController = viewFolder.add(CONFIG, 'roastLevel', {
@@ -559,11 +562,11 @@ function setupGUI() {
     'Dark': 'dark'
   }).name('☕ Roast Level').onChange(applyRoastLevel);
   viewKeys.add('roastLevel');
-  // Show roast level only for lively preset
-  if (CONFIG.preset !== 'lively') roastLevelController.hide();
+  // Show roast level only for singleOrigin preset
+  if (CONFIG.preset !== 'singleOrigin') roastLevelController.hide();
   presetController.onChange((v) => {
     applyPreset(v);
-    if (v === 'lively') {
+    if (v === 'singleOrigin') {
       roastLevelController.show();
     } else {
       roastLevelController.hide();
@@ -630,6 +633,16 @@ function setupGUI() {
   kidneySub.add(CONFIG, 'endPinch', 0, 0.6, 0.01).name('End Pinch').onFinishChange(rebuildGeometry);
   kidneySub.add(CONFIG, 'endPointiness', 0, 0.5, 0.01).name('Pointiness').onFinishChange(rebuildGeometry);
   addResetButton(kidneySub, rebuildGeometry);
+  // Hide kidney folder for ellipsoid geometry
+  if (CONFIG.geometryType === GEOMETRY_TYPES.CLASSIC) kidneySub.hide();
+  geometryTypeController.onChange((v) => {
+    rebuildGeometry();
+    if (v === GEOMETRY_TYPES.CLASSIC) {
+      kidneySub.hide();
+    } else {
+      kidneySub.show();
+    }
+  });
 
   const creaseSub = createFolder(beanFolder, 'Crease');
   creaseSub.add(CONFIG, 'creaseWidth', 0.01, 0.1, 0.001).name('Width').onChange(v => {
@@ -1007,8 +1020,22 @@ function transitionToMultiBean() {
 // CREATE BEANS
 // ============================================
 function createBeans() {
+  // Get colored roast levels for Blend mode
+  const coloredRoasts = CONFIG.blendMode ? getColoredRoastLevels() : null;
+
   for (let i = 0; i < CONFIG.beanCount; i++) {
-    const bean = new THREE.Mesh(beanGeometry, beanMaterial);
+    // In blendMode, clone material with random roast color
+    let material = beanMaterial;
+    if (CONFIG.blendMode && coloredRoasts.length > 0) {
+      const roast = coloredRoasts[Math.floor(Math.random() * coloredRoasts.length)];
+      material = beanMaterial.clone();
+      material.uniforms = THREE.UniformsUtils.clone(beanMaterial.uniforms);
+      material.uniforms.baseColor.value = new THREE.Color(roast.baseColor);
+      material.uniforms.highlightColor.value = new THREE.Color(roast.highlightColor);
+      material.uniforms.creaseColor.value = new THREE.Color(roast.creaseColor);
+    }
+
+    const bean = new THREE.Mesh(beanGeometry, material);
 
     bean.position.set(
       (Math.random() - 0.5) * CONFIG.spreadX * 2,
