@@ -229,8 +229,8 @@ export const LANDING_PAGE_CONFIG = {
 // ============================================
 export const BACKGROUND_BEANS_CONFIG = {
   // Bean count
-  beanCountDesktop: 120,
-  beanCountMobile: 120,
+  beanCountDesktop: 80,
+  beanCountMobile: 80,
   // Spawn area
   spreadX: 14,
   spreadY: 10,
@@ -243,7 +243,7 @@ export const BACKGROUND_BEANS_CONFIG = {
   driftSpeed: 0.05,
   rotationSpeed: 0.7,
   // Parallax
-  parallaxIntensity: 0.3,
+  parallaxIntensity: 0.5,
   // Dot grid
   dotsEnabled: true,
   dotSpacing: 0.45,
