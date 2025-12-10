@@ -136,13 +136,14 @@ body {
 
 .marquee-content {
   display: inline-block;
-  animation: marquee 20s linear infinite;
+  animation: marquee 40s linear infinite;
 
   & span {
-    font-family: var(--font-primary);
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-family: 'Handjet', system-ui;
+    font-size: 1.25rem;
+    font-weight: 400;
     text-transform: uppercase;
+    letter-spacing: 1px;
 
     &::after {
       content: ' • ';
