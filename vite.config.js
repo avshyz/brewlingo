@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
+import qrCode from '@eventengineering/vite-qr-code';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
+  plugins: [qrCode({ addressFamilies: ['IPv4'] })],
   root: 'src',
   base: '/brewlingo/',
   publicDir: '../public',
