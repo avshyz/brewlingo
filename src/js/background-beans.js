@@ -35,8 +35,8 @@ const CONFIG = {
   // Runtime state
   beanCount: isMobile ? BACKGROUND_BEANS_CONFIG.beanCountMobile : BACKGROUND_BEANS_CONFIG.beanCountDesktop,
   paused: false,
-  // 3D canvas toggle (off by default - CSS dots show instead)
-  canvas3DEnabled: false
+  // 3D canvas toggle (on by default)
+  canvas3DEnabled: true
 };
 
 // ============================================
@@ -54,14 +54,20 @@ let gui = null;
 let dotsMesh = null;
 let animationId = null;
 let isInitialized = false;
+let scrollTimeout = null;
+let isScrolling = false;
 
 // ============================================
-// INITIALIZATION (GUI only - scene is lazy)
+// INITIALIZATION
 // ============================================
 function init() {
-  // Only set up debug GUI on page load
-  // Scene creation is deferred until toggle is enabled
+  // Set up debug GUI
   setupDebugGUI();
+
+  // Create scene immediately if 3D canvas is enabled by default
+  if (CONFIG.canvas3DEnabled) {
+    toggleCanvas3D(true);
+  }
 }
 
 // ============================================
@@ -296,6 +302,13 @@ function updateParallax() {
 
   // Move camera Y position based on scroll (subtle depth shift)
   camera.position.y = -scrollProgress * CONFIG.parallaxIntensity * 10;
+
+  // Pause animation while scrolling
+  isScrolling = true;
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    isScrolling = false;
+  }, 150);
 }
 
 // ============================================
@@ -309,8 +322,8 @@ function animate() {
   // Update CMYK time for animated glow
   cmykPass.uniforms.time.value += 0.016;
 
-  // Animate beans (unless paused)
-  if (!CONFIG.paused) {
+  // Animate beans (unless paused or scrolling)
+  if (!CONFIG.paused && !isScrolling) {
     beans.forEach(bean => {
       const { vx, vy, vrx, vry, vrz } = bean.userData;
 

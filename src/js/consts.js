@@ -228,9 +228,9 @@ export const LANDING_PAGE_CONFIG = {
 // BACKGROUND BEANS CONFIG (language.html, recipe.html)
 // ============================================
 export const BACKGROUND_BEANS_CONFIG = {
-  // Bean count (reduced for scroll performance)
-  beanCountDesktop: 80,
-  beanCountMobile: 80,
+  // Bean count
+  beanCountDesktop: 120,
+  beanCountMobile: 120,
   // Spawn area
   spreadX: 14,
   spreadY: 10,
@@ -240,10 +240,10 @@ export const BACKGROUND_BEANS_CONFIG = {
   scaleMin: 0.08,
   scaleMax: 0.35,
   // Animation (slower than landing page)
-  driftSpeed: 0.3,
-  rotationSpeed: 1.5,
+  driftSpeed: 0.05,
+  rotationSpeed: 0.7,
   // Parallax
-  parallaxIntensity: 0.7,
+  parallaxIntensity: 0.3,
   // Dot grid
   dotsEnabled: true,
   dotSpacing: 0.45,

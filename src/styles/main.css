@@ -200,7 +200,7 @@ body {
 .container {
     max-width: var(--view-width);
     margin: 0 auto;
-    padding: 0 var(--view-padding);
+    padding: var(--view-padding);
     position: relative;
     z-index: 1;
 }
