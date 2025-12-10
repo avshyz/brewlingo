@@ -20,7 +20,7 @@ const OG_HEIGHT = 630;
 const BEAN_SIZE = 280;
 const DOT_SPACING = 35;
 const DOT_SIZE = 4;
-const BANNER_PATH = path.join(__dirname, '..', 'public', 'banner.svg');
+const BANNER_PATH = path.join(__dirname, '..', 'public', 'assets', 'banner.svg');
 
 async function generateOGImage() {
   const svgPath = path.join(__dirname, '..', 'public', 'assets', 'favicon.svg');
@@ -129,8 +129,8 @@ async function generateOGImage() {
     ${dots.join('\n    ')}
   </g>
   <g transform="translate(${beanX}, ${beanY})">
-    <svg width="${BEAN_SIZE}" height="${BEAN_SIZE}" viewBox="0 0 52 52">
-      ${svgContent.replace(/<\/?svg[^>]*>/g, '')}
+    <svg width="${BEAN_SIZE}" height="${BEAN_SIZE}" viewBox="0 0 32 32">
+      ${svgContent.replace(/<\/?svg[^>]*>/g, '').replace(/<rect[^>]*fill="#FFFFFF"[^>]*\/>/, '')}
     </svg>
   </g>
   <defs>

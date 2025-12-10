@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/banner.svg" alt="Brewlingo banner">
+  <img src="public/assets/banner.svg" alt="Brewlingo banner">
 </p>
 
 # Brewlingo
