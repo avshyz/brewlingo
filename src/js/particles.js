@@ -11,8 +11,6 @@ import gsap from 'gsap';
 import {
   BEAN_CONFIG,
   GEOMETRY_TYPES,
-  CLASSIC_DEFAULT_DIMS,
-  SUPERELLIPSE_DEFAULT_DIMS,
   createBeanGeometry,
   createBeanShaderUniforms,
   BeanShaderVertexShader,
@@ -21,7 +19,14 @@ import {
   CMYKShaderVertexShader,
   CMYKShaderFragmentShader
 } from './bean-model.js';
-import { ROAST_LEVELS, getColoredRoastLevels } from './consts.js';
+import {
+  ROAST_LEVELS,
+  getColoredRoastLevels,
+  VISUAL_PRESETS,
+  LANDING_PAGE_CONFIG,
+  GEOMETRY_PARAMS,
+  GEOMETRY_TYPES as CONST_GEOMETRY_TYPES
+} from './consts.js';
 
 // ============================================
 // CONFIGURATION
@@ -29,42 +34,20 @@ import { ROAST_LEVELS, getColoredRoastLevels } from './consts.js';
 const isMobile = window.innerWidth <= 640;
 const isDebug = new URLSearchParams(window.location.search).get('d') === '1';
 
-// Merge bean config with scene-specific config
+// Merge bean config with scene-specific config from consts.js
 const CONFIG = {
   // View options
   singleBeanMode: false,  // Default unchecked (starts in multi-bean view)
   showUI: true,           // Show landing card UI
-  cmykEnabled: true,      // CMYK on by default for landing
   wireframe: false,       // Show wireframe mesh
-  preset: 'blend',        // Visual preset (classic, modern, singleOrigin, blend)
   geometryType: GEOMETRY_TYPES.SUPERELLIPSE,  // Bean geometry style
-  // Landing card transition settings
-  cardFadeScale: 2,           // Scale factor when card fades out
-  cardFadeDuration: 0.9,      // Duration multiplier (relative to main transition)
-  // Scene settings (not in BEAN_CONFIG)
-  beanCount: 200,
-  driftSpeed: 0.5,
-  rotationSpeed: 3,
-  scaleMin: 0.1,
-  scaleMax: 0.43,
-  depthMin: -5,
-  depthMax: 2,
-  spreadX: 12,
-  spreadY: 8,
-  staggerDelay: 10,
-  animationDuration: 1000,
-  elasticAmplitude: 1.5,
-  elasticPeriod: 0.3,
   paused: false,
-  collisionEnabled: true,
-  collisionDamping: 0.8,
-  collisionRadiusMultiplier: 0.5,
   // Import all bean shape/style settings from shared config
   ...BEAN_CONFIG,
+  // Import scene settings from LANDING_PAGE_CONFIG
+  ...LANDING_PAGE_CONFIG,
   // Roast level theme selector
-  roastLevel: 'light',
-  // Blend mode - each bean gets a random roast color
-  blendMode: true
+  roastLevel: LANDING_PAGE_CONFIG.roastLevel || 'light'
 };
 
 // Store initial config for reset/export functionality
@@ -416,65 +399,17 @@ function applyRoastLevel(level) {
   }
 }
 
-// Preset definitions
-const PRESETS = {
-  classic: {
-    geometryType: GEOMETRY_TYPES.CLASSIC,
-    toonEnabled: false,
-    rimEnabled: false,
-    specularEnabled: false,
-    colorEnabled: false,
-    blendMode: false
-  },
-  modern: {
-    geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
-    toonEnabled: false,
-    rimEnabled: false,
-    specularEnabled: true,
-    colorEnabled: false,
-    blendMode: false
-  },
-  singleOrigin: {
-    geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
-    toonEnabled: true,
-    toonBands: 3,
-    rimEnabled: true,
-    rimIntensity: 1.15,
-    rimPower: 5,
-    specularEnabled: true,
-    specularIntensity: 0.5,
-    specularThreshold: 0.25,
-    specularPower: 36,
-    colorEnabled: true,
-    blendMode: false
-  },
-  blend: {
-    geometryType: GEOMETRY_TYPES.SUPERELLIPSE,
-    toonEnabled: true,
-    toonBands: 3,
-    rimEnabled: true,
-    rimIntensity: 1.15,
-    rimPower: 5,
-    specularEnabled: true,
-    specularIntensity: 0.5,
-    specularThreshold: 0.25,
-    specularPower: 36,
-    colorEnabled: true,
-    blendMode: true
-  }
-};
-
-// Apply a visual preset
+// Apply a visual preset (uses VISUAL_PRESETS from consts.js)
 function applyPreset(presetName) {
-  const preset = PRESETS[presetName];
+  const preset = VISUAL_PRESETS[presetName];
   if (!preset) return;
 
-  // Apply geometry type and dimensions
+  // Apply geometry type and dimensions from GEOMETRY_PARAMS
   CONFIG.geometryType = preset.geometryType;
-  const dims = preset.geometryType === GEOMETRY_TYPES.CLASSIC ? CLASSIC_DEFAULT_DIMS : SUPERELLIPSE_DEFAULT_DIMS;
-  CONFIG.beanScaleX = dims.beanScaleX;
-  CONFIG.beanScaleY = dims.beanScaleY;
-  CONFIG.beanScaleZ = dims.beanScaleZ;
+  const params = preset.geometryType === GEOMETRY_TYPES.CLASSIC ? GEOMETRY_PARAMS.CLASSIC : GEOMETRY_PARAMS.SUPERELLIPSE;
+  CONFIG.beanScaleX = params.beanScaleX;
+  CONFIG.beanScaleY = params.beanScaleY;
+  CONFIG.beanScaleZ = params.beanScaleZ;
 
   // Apply shader settings
   CONFIG.toonEnabled = preset.toonEnabled;

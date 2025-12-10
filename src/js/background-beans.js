@@ -2,6 +2,8 @@
  * Parallax 3D Coffee Bean Background
  * Lightweight renderer for language.html and recipe.html
  * Modern preset (specular-only, high contrast black & white)
+ *
+ * Scene is lazily initialized only when enabled via debug GUI
  */
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -9,7 +11,6 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import GUI from 'lil-gui';
 import {
-  BEAN_CONFIG,
   createBeanGeometry,
   createBeanShaderUniforms,
   BeanShaderVertexShader,
@@ -18,6 +19,7 @@ import {
   CMYKShaderVertexShader,
   CMYKShaderFragmentShader
 } from './bean-model.js';
+import { BEAN_CONFIG, BACKGROUND_BEANS_CONFIG } from './consts.js';
 
 // ============================================
 // CONFIGURATION
@@ -26,81 +28,48 @@ const isMobile = window.innerWidth <= 640;
 const isDebug = new URLSearchParams(window.location.search).get('d') === '1';
 
 const CONFIG = {
-  // Bean count (reduced for scroll performance)
-  beanCount: isMobile ? 40 : 80,
-
-  // Spawn area
-  spreadX: 14,
-  spreadY: 10,
-  depthMin: -6,
-  depthMax: 4,
-
-  // Scale range
-  scaleMin: 0.08,
-  scaleMax: 0.35,
-
-  // Animation (slower than landing page)
-  driftSpeed: 0.3,
-  rotationSpeed: 1.5,
-  paused: false,
-
-  // Parallax
-  parallaxIntensity: 0.7,
-
-  // Dot grid
-  dotsEnabled: true,
-  dotSpacing: 0.45,
-  dotSize: 0.06,
-  dotDepth: -15,
-  dotColor: '#1a1a1a',
-  dotSpreadX: 30,
-  dotSpreadY: 40,
-
-  // Modern preset: specular-only, black & white
+  // Merge base bean config
   ...BEAN_CONFIG,
-  toonEnabled: false,
-  rimEnabled: false,
-  specularEnabled: true,
-  colorEnabled: false,
-
-  // CMYK effect
-  cmykEnabled: true,
-  cmykOffset: 0.0005
+  // Apply background beans config
+  ...BACKGROUND_BEANS_CONFIG,
+  // Runtime state
+  beanCount: isMobile ? BACKGROUND_BEANS_CONFIG.beanCountMobile : BACKGROUND_BEANS_CONFIG.beanCountDesktop,
+  paused: false,
+  // 3D canvas toggle (off by default - CSS dots show instead)
+  canvas3DEnabled: false
 };
 
 // ============================================
-// GLOBALS
+// GLOBALS (lazy initialized)
 // ============================================
-let scene, camera, renderer, composer, cmykPass;
+let scene = null;
+let camera = null;
+let renderer = null;
+let composer = null;
+let cmykPass = null;
 let beans = [];
 let beanGeometry = null;
 let beanMaterial = null;
 let gui = null;
 let dotsMesh = null;
-
-// Scroll state
-let isScrolling = false;
-let scrollTimeout;
+let animationId = null;
+let isInitialized = false;
 
 // ============================================
-// SHADERS
-// ============================================
-const CMYKShader = {
-  uniforms: createCMYKShaderUniforms(CONFIG, isMobile),
-  vertexShader: CMYKShaderVertexShader,
-  fragmentShader: CMYKShaderFragmentShader
-};
-
-const BeanShader = {
-  uniforms: createBeanShaderUniforms(CONFIG),
-  vertexShader: BeanShaderVertexShader,
-  fragmentShader: BeanShaderFragmentShader
-};
-
-// ============================================
-// INITIALIZATION
+// INITIALIZATION (GUI only - scene is lazy)
 // ============================================
 function init() {
+  // Only set up debug GUI on page load
+  // Scene creation is deferred until toggle is enabled
+  setupDebugGUI();
+}
+
+// ============================================
+// CREATE 3D SCENE (called when toggle is enabled)
+// ============================================
+function createScene() {
+  if (isInitialized) return;
+
   if (!window.WebGLRenderingContext) {
     console.log('WebGL not supported');
     return;
@@ -108,6 +77,19 @@ function init() {
 
   const canvas = document.getElementById('background-canvas');
   if (!canvas) return;
+
+  // Shaders (created fresh each time)
+  const CMYKShader = {
+    uniforms: createCMYKShaderUniforms(CONFIG, isMobile),
+    vertexShader: CMYKShaderVertexShader,
+    fragmentShader: CMYKShaderFragmentShader
+  };
+
+  const BeanShader = {
+    uniforms: createBeanShaderUniforms(CONFIG),
+    vertexShader: BeanShaderVertexShader,
+    fragmentShader: BeanShaderFragmentShader
+  };
 
   // Scene
   scene = new THREE.Scene();
@@ -153,27 +135,86 @@ function init() {
 
   // Event listeners
   window.addEventListener('resize', onResize);
-  window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('scroll', updateParallax, { passive: true });
 
   // Initial parallax position
   updateParallax();
 
-  // Debug GUI (only with ?d=1)
-  setupDebugGUI();
-
   // Start animation
   animate();
+
+  isInitialized = true;
+}
+
+// ============================================
+// DESTROY 3D SCENE (called when toggle is disabled)
+// ============================================
+function destroyScene() {
+  if (!isInitialized) return;
+
+  // Stop animation
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
+
+  // Remove event listeners
+  window.removeEventListener('resize', onResize);
+  window.removeEventListener('scroll', updateParallax);
+
+  // Dispose beans
+  beans.forEach(bean => {
+    scene.remove(bean);
+  });
+  beans = [];
+
+  // Dispose dots
+  if (dotsMesh) {
+    scene.remove(dotsMesh);
+    dotsMesh.geometry.dispose();
+    dotsMesh.material.dispose();
+    dotsMesh = null;
+  }
+
+  // Dispose geometry and material
+  if (beanGeometry) {
+    beanGeometry.dispose();
+    beanGeometry = null;
+  }
+  if (beanMaterial) {
+    beanMaterial.dispose();
+    beanMaterial = null;
+  }
+
+  // Dispose composer and renderer
+  if (composer) {
+    composer.dispose();
+    composer = null;
+  }
+  if (renderer) {
+    renderer.dispose();
+    renderer = null;
+  }
+
+  // Clear references
+  scene = null;
+  camera = null;
+  cmykPass = null;
+
+  isInitialized = false;
 }
 
 // ============================================
 // CREATE DOTS GRID
 // ============================================
 function createDots() {
+  if (!scene) return;
+
   if (dotsMesh) {
     scene.remove(dotsMesh);
     dotsMesh.geometry.dispose();
     dotsMesh.material.dispose();
+    dotsMesh = null;
   }
 
   if (!CONFIG.dotsEnabled) return;
@@ -209,6 +250,8 @@ function createDots() {
 // CREATE BEANS
 // ============================================
 function createBeans() {
+  if (!scene || !beanGeometry || !beanMaterial) return;
+
   for (let i = 0; i < CONFIG.beanCount; i++) {
     const bean = new THREE.Mesh(beanGeometry, beanMaterial);
 
@@ -245,6 +288,8 @@ function createBeans() {
 // PARALLAX
 // ============================================
 function updateParallax() {
+  if (!camera) return;
+
   const scrollY = window.scrollY;
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
   const scrollProgress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
@@ -254,21 +299,12 @@ function updateParallax() {
 }
 
 // ============================================
-// SCROLL OPTIMIZATION
-// ============================================
-function onScroll() {
-  isScrolling = true;
-  clearTimeout(scrollTimeout);
-  scrollTimeout = setTimeout(() => {
-    isScrolling = false;
-  }, 150);
-}
-
-// ============================================
 // ANIMATION LOOP
 // ============================================
 function animate() {
-  requestAnimationFrame(animate);
+  animationId = requestAnimationFrame(animate);
+
+  if (!composer || !cmykPass) return;
 
   // Update CMYK time for animated glow
   cmykPass.uniforms.time.value += 0.016;
@@ -305,6 +341,8 @@ function animate() {
 // RESIZE
 // ============================================
 function onResize() {
+  if (!camera || !renderer || !composer) return;
+
   const width = window.innerWidth;
   const height = window.innerHeight;
 
@@ -319,33 +357,33 @@ function onResize() {
 // DEBUG GUI
 // ============================================
 
-// Store initial values for reset
+// Store initial values for reset (from imported config)
 const INITIAL_CONFIG = {
   // Setup
-  beanCount: isMobile ? 40 : 80,
-  spreadX: 14,
-  spreadY: 10,
-  depthMin: -6,
-  depthMax: 4,
-  scaleMin: 0.08,
-  scaleMax: 0.35,
+  beanCount: isMobile ? BACKGROUND_BEANS_CONFIG.beanCountMobile : BACKGROUND_BEANS_CONFIG.beanCountDesktop,
+  spreadX: BACKGROUND_BEANS_CONFIG.spreadX,
+  spreadY: BACKGROUND_BEANS_CONFIG.spreadY,
+  depthMin: BACKGROUND_BEANS_CONFIG.depthMin,
+  depthMax: BACKGROUND_BEANS_CONFIG.depthMax,
+  scaleMin: BACKGROUND_BEANS_CONFIG.scaleMin,
+  scaleMax: BACKGROUND_BEANS_CONFIG.scaleMax,
   // Motion
   paused: false,
-  driftSpeed: 0.3,
-  rotationSpeed: 1.5,
+  driftSpeed: BACKGROUND_BEANS_CONFIG.driftSpeed,
+  rotationSpeed: BACKGROUND_BEANS_CONFIG.rotationSpeed,
   // Parallax
-  parallaxIntensity: 0.7,
+  parallaxIntensity: BACKGROUND_BEANS_CONFIG.parallaxIntensity,
   // Dots
-  dotsEnabled: true,
-  dotSpacing: 0.45,
-  dotSize: 0.06,
-  dotDepth: -15,
-  dotColor: '#1a1a1a',
-  dotSpreadX: 30,
-  dotSpreadY: 40,
+  dotsEnabled: BACKGROUND_BEANS_CONFIG.dotsEnabled,
+  dotSpacing: BACKGROUND_BEANS_CONFIG.dotSpacing,
+  dotSize: BACKGROUND_BEANS_CONFIG.dotSize,
+  dotDepth: BACKGROUND_BEANS_CONFIG.dotDepth,
+  dotColor: BACKGROUND_BEANS_CONFIG.dotColor,
+  dotSpreadX: BACKGROUND_BEANS_CONFIG.dotSpreadX,
+  dotSpreadY: BACKGROUND_BEANS_CONFIG.dotSpreadY,
   // CMYK
-  cmykEnabled: true,
-  cmykOffset: 0.0005,
+  cmykEnabled: BACKGROUND_BEANS_CONFIG.cmykEnabled,
+  cmykOffset: BACKGROUND_BEANS_CONFIG.cmykOffset,
   cmykBreatheEnabled: BEAN_CONFIG.cmykBreatheEnabled,
   cmykBreatheIntensity: BEAN_CONFIG.cmykBreatheIntensity,
   cmykBreatheSpeed: BEAN_CONFIG.cmykBreatheSpeed,
@@ -365,6 +403,7 @@ function setupDebugGUI() {
 
   // View folder (at top level for quick access)
   const viewFolder = gui.addFolder('👁 View');
+  viewFolder.add(CONFIG, 'canvas3DEnabled').name('🫘 3D Background').onChange(toggleCanvas3D);
   viewFolder.add({ hideUI: false }, 'hideUI').name('Hide Page UI').onChange(togglePageUI);
 
   // Setup folder
@@ -415,22 +454,22 @@ function setupDebugGUI() {
   // CMYK folder
   const cmykFolder = gui.addFolder('🌈 CMYK Effect');
   cmykFolder.add(CONFIG, 'cmykEnabled').name('Enabled').onChange(v => {
-    cmykPass.enabled = v;
+    if (cmykPass) cmykPass.enabled = v;
   });
   cmykFolder.add(CONFIG, 'cmykOffset', 0, 0.01, 0.0005).name('Offset').onChange(v => {
-    cmykPass.uniforms.offset.value = v;
+    if (cmykPass) cmykPass.uniforms.offset.value = v;
   });
   cmykFolder.add(CONFIG, 'cmykBreatheEnabled').name('Breathe').onChange(v => {
-    cmykPass.uniforms.breatheEnabled.value = v ? 1.0 : 0.0;
+    if (cmykPass) cmykPass.uniforms.breatheEnabled.value = v ? 1.0 : 0.0;
   });
   cmykFolder.add(CONFIG, 'cmykBreatheIntensity', 0, 2, 0.1).name('Breathe Intensity').onChange(v => {
-    cmykPass.uniforms.breatheIntensity.value = v;
+    if (cmykPass) cmykPass.uniforms.breatheIntensity.value = v;
   });
   cmykFolder.add(CONFIG, 'cmykBreatheSpeed', 0, 3, 0.1).name('Breathe Speed').onChange(v => {
-    cmykPass.uniforms.breatheSpeed.value = v;
+    if (cmykPass) cmykPass.uniforms.breatheSpeed.value = v;
   });
   cmykFolder.add(CONFIG, 'cmykRotationSpeed', 0, 2, 0.05).name('Rotation Speed').onChange(v => {
-    cmykPass.uniforms.rotationSpeed.value = v;
+    if (cmykPass) cmykPass.uniforms.rotationSpeed.value = v;
   });
   cmykFolder.add({ reset: () => resetFolder('cmyk') }, 'reset').name('↺ Reset CMYK');
 }
@@ -474,19 +513,22 @@ function resetFolder(folder) {
       CONFIG.cmykBreatheIntensity = INITIAL_CONFIG.cmykBreatheIntensity;
       CONFIG.cmykBreatheSpeed = INITIAL_CONFIG.cmykBreatheSpeed;
       CONFIG.cmykRotationSpeed = INITIAL_CONFIG.cmykRotationSpeed;
-      cmykPass.enabled = CONFIG.cmykEnabled;
-      cmykPass.uniforms.offset.value = CONFIG.cmykOffset;
-      cmykPass.uniforms.breatheEnabled.value = CONFIG.cmykBreatheEnabled ? 1.0 : 0.0;
-      cmykPass.uniforms.breatheIntensity.value = CONFIG.cmykBreatheIntensity;
-      cmykPass.uniforms.breatheSpeed.value = CONFIG.cmykBreatheSpeed;
-      cmykPass.uniforms.rotationSpeed.value = CONFIG.cmykRotationSpeed;
+      if (cmykPass) {
+        cmykPass.enabled = CONFIG.cmykEnabled;
+        cmykPass.uniforms.offset.value = CONFIG.cmykOffset;
+        cmykPass.uniforms.breatheEnabled.value = CONFIG.cmykBreatheEnabled ? 1.0 : 0.0;
+        cmykPass.uniforms.breatheIntensity.value = CONFIG.cmykBreatheIntensity;
+        cmykPass.uniforms.breatheSpeed.value = CONFIG.cmykBreatheSpeed;
+        cmykPass.uniforms.rotationSpeed.value = CONFIG.cmykRotationSpeed;
+      }
       break;
   }
   // Update GUI to reflect new values
-  gui.controllersRecursive().forEach(c => c.updateDisplay());
+  if (gui) gui.controllersRecursive().forEach(c => c.updateDisplay());
 }
 
 function respawnBeans() {
+  if (!scene) return;
   // Remove existing beans
   beans.forEach(bean => scene.remove(bean));
   beans = [];
@@ -516,6 +558,37 @@ function togglePageUI(hidden) {
       el.style.pointerEvents = '';
     }
   });
+}
+
+function toggleCanvas3D(enabled) {
+  const canvas = document.getElementById('background-canvas');
+  if (!canvas) return;
+
+  CONFIG.canvas3DEnabled = enabled;
+
+  if (enabled) {
+    // Create scene if not already initialized
+    createScene();
+
+    // Show 3D canvas, hide CSS dots
+    canvas.style.transition = 'opacity 0.4s ease';
+    canvas.style.opacity = '1';
+    canvas.style.pointerEvents = '';
+    document.documentElement.classList.add('canvas-3d-active');
+  } else {
+    // Hide 3D canvas, show CSS dots
+    canvas.style.transition = 'opacity 0.4s ease';
+    canvas.style.opacity = '0';
+    canvas.style.pointerEvents = 'none';
+    document.documentElement.classList.remove('canvas-3d-active');
+
+    // Destroy scene after fade out to free resources
+    setTimeout(() => {
+      if (!CONFIG.canvas3DEnabled) {
+        destroyScene();
+      }
+    }, 400);
+  }
 }
 
 // ============================================

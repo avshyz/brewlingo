@@ -1,54 +1,25 @@
 /**
  * Shared Bean Model
- * Configuration, geometry, and shaders for coffee bean rendering
+ * Geometry and shaders for coffee bean rendering
+ * Configuration imported from consts.js
  */
 import * as THREE from 'three';
+import { BEAN_CONFIG, GEOMETRY_TYPES, GEOMETRY_PARAMS } from './consts.js';
 
-// ============================================
-// BEAN SHAPE CONFIGURATION
-// ============================================
-export const BEAN_CONFIG = {
-  // Bean shape
-  beanScaleX: 0.45,
-  beanScaleY: 0.66,
-  beanScaleZ: 0.35,
-  // Kidney deformation
-  kidneyAmount: 0.02,      // How much kidney curve (0 = ellipse, 0.3 = strong kidney)
-  kidneyOffset: 0.3,       // Vertical offset of the curve center
-  // Asymmetric bulge (flat front, domed back)
-  backBulge: 0.25,         // Extra convexity on back side
-  // End pinch
-  endPinch: 0,             // How much the ends pinch inward
-  endPointiness: 0.14,     // How pointed vs rounded the ends are
-  // Crease
-  creaseWidth: 0.027,
-  creaseLength: 0.7,
-  creaseRadius: 0.02,      // Rounded ends (0 = sharp, higher = more rounded)
-  // Cel-shading settings (blend preset defaults)
-  toonEnabled: true,
-  rimEnabled: true,
-  specularEnabled: true,
-  rimPower: 5,
-  rimIntensity: 1.15,
-  toonBands: 3,
-  specularPower: 36,
-  specularThreshold: 0.25,
-  specularIntensity: 0.5,
-  lightX: 0.5,
-  lightY: 1.0,
-  lightZ: 0.3,
-  // Bean colors (blend preset defaults)
-  colorEnabled: true,
-  baseColor: '#C4A484',      // Light roasted coffee
-  highlightColor: '#E8DCC4', // Warm cream highlight
-  creaseColor: '#E5D9C3',    // Light brown-beige crease
-  // CMYK effect
-  cmykOffset: 0.002,
-  cmykBreatheEnabled: true,
-  cmykBreatheIntensity: 0.5,
-  cmykBreatheSpeed: 0.8,
-  cmykBreatheWaveFreq: 0.5,
-  cmykRotationSpeed: 0.4
+// Re-export for backwards compatibility
+export { BEAN_CONFIG, GEOMETRY_TYPES };
+
+// Legacy exports (now derived from GEOMETRY_PARAMS)
+export const CLASSIC_DEFAULT_DIMS = {
+  beanScaleX: GEOMETRY_PARAMS.CLASSIC.beanScaleX,
+  beanScaleY: GEOMETRY_PARAMS.CLASSIC.beanScaleY,
+  beanScaleZ: GEOMETRY_PARAMS.CLASSIC.beanScaleZ
+};
+
+export const SUPERELLIPSE_DEFAULT_DIMS = {
+  beanScaleX: GEOMETRY_PARAMS.SUPERELLIPSE.beanScaleX,
+  beanScaleY: GEOMETRY_PARAMS.SUPERELLIPSE.beanScaleY,
+  beanScaleZ: GEOMETRY_PARAMS.SUPERELLIPSE.beanScaleZ
 };
 
 // ============================================
@@ -221,24 +192,6 @@ export function createBeanGeometrySuperellipse(config = BEAN_CONFIG, params = {}
 // ============================================
 // GEOMETRY SELECTOR
 // ============================================
-export const GEOMETRY_TYPES = {
-  CLASSIC: 'classic',
-  SUPERELLIPSE: 'superellipse'
-};
-
-// Default dimensions for each geometry type
-export const CLASSIC_DEFAULT_DIMS = {
-  beanScaleX: 0.55,
-  beanScaleY: 0.65,
-  beanScaleZ: 0.4
-};
-
-export const SUPERELLIPSE_DEFAULT_DIMS = {
-  beanScaleX: 0.45,
-  beanScaleY: 0.66,
-  beanScaleZ: 0.35
-};
-
 export function createBeanGeometry(config = BEAN_CONFIG, params = {}) {
   const geometryType = config.geometryType || GEOMETRY_TYPES.SUPERELLIPSE;
 

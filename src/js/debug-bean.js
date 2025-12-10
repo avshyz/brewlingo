@@ -20,29 +20,16 @@ import {
   CMYKShaderVertexShader,
   CMYKShaderFragmentShader
 } from './bean-model.js';
+import { DEBUG_BEAN_CONFIG } from './consts.js';
 
 // ============================================
-// CONFIGURATION (imports from shared module + view options)
+// CONFIGURATION (imports from shared module + view options from consts.js)
 // ============================================
 const CONFIG = {
   // Import all bean settings from shared module
   ...BEAN_CONFIG,
-  // View options (debug page specific)
-  autoRotate: false,
-  showWireframe: false,
-  backgroundColor: '#ffffff',
-  cmykEnabled: false,  // Off by default for distraction-free sculpting
-  // Multi-bean mode settings
-  multiBeanMode: false,
-  beanCount: 200,
-  scaleMin: 0.05,
-  scaleMax: 0.48,
-  spreadX: 12,
-  spreadY: 8,
-  depthMin: -5,
-  depthMax: 2,
-  driftSpeed: 0.5,
-  rotationSpeed: 3
+  // Import debug page specific settings from consts.js
+  ...DEBUG_BEAN_CONFIG
 };
 
 // ============================================

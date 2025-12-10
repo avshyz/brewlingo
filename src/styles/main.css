@@ -120,8 +120,8 @@ html {
     );
     background-size: 20px 20px;
 
-    /* Remove CSS dots when 3D background is active (dots rendered in Three.js) */
-    &:has(#background-canvas) {
+    /* Remove CSS dots when 3D background is enabled (dots rendered in Three.js) */
+    &.canvas-3d-active {
         background-image: none;
     }
 }
