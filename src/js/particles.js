@@ -369,6 +369,11 @@ const ROAST_LEVELS = {
     highlightColor: '#B8C9A8',
     creaseColor: '#5C7A4F'
   },
+  ultralight: {
+    baseColor: '#C4A484',
+    highlightColor: '#E8DCC4',
+    creaseColor: '#D4C4A8'
+  },
   light: {
     baseColor: '#C4A484',
     highlightColor: '#E8DCC4',
@@ -534,17 +539,36 @@ function setupGUI() {
   addViewControl('wireframe').name('🔲 Wireframe').onChange(v => {
     beanMaterial.wireframe = v;
   });
-  viewFolder.add(CONFIG, 'preset', {
-    'Classic': 'classic',
-    'Modern': 'modern',
-    'Lively': 'lively'
-  }).name('🎨 Preset').onChange(applyPreset);
-  viewKeys.add('preset');
   viewFolder.add(CONFIG, 'geometryType', {
     'Classic (ellipsoid)': GEOMETRY_TYPES.CLASSIC,
     'Superellipse (kidney)': GEOMETRY_TYPES.SUPERELLIPSE
   }).name('🫘 Geometry').onChange(rebuildGeometry);
   viewKeys.add('geometryType');
+  const presetController = viewFolder.add(CONFIG, 'preset', {
+    'Classic': 'classic',
+    'Modern': 'modern',
+    'Lively': 'lively'
+  }).name('🎨 Preset').onChange(applyPreset);
+  viewKeys.add('preset');
+  const roastLevelController = viewFolder.add(CONFIG, 'roastLevel', {
+    'Green': 'green',
+    'Nordic': 'ultralight',
+    'Light': 'light',
+    'Medium-Light': 'mediumLight',
+    'Medium': 'medium',
+    'Dark': 'dark'
+  }).name('☕ Roast Level').onChange(applyRoastLevel);
+  viewKeys.add('roastLevel');
+  // Show roast level only for lively preset
+  if (CONFIG.preset !== 'lively') roastLevelController.hide();
+  presetController.onChange((v) => {
+    applyPreset(v);
+    if (v === 'lively') {
+      roastLevelController.show();
+    } else {
+      roastLevelController.hide();
+    }
+  });
 
   // Card transition subfolder
   const cardTransSub = createFolder(viewFolder, 'Card Transition');
@@ -629,13 +653,6 @@ function setupGUI() {
   colorSub.add(CONFIG, 'colorEnabled').name('Enable').onChange(v => {
     beanMaterial.uniforms.colorEnabled.value = v ? 1.0 : 0.0;
   });
-  colorSub.add(CONFIG, 'roastLevel', {
-    'Green': 'green',
-    'Light': 'light',
-    'Medium-Light': 'mediumLight',
-    'Medium': 'medium',
-    'Dark': 'dark'
-  }).name('☕ Roast Level').onChange(applyRoastLevel);
   colorSub.addColor(CONFIG, 'baseColor').name('Bean').onChange(v => {
     beanMaterial.uniforms.baseColor.value.set(v);
   });
