@@ -119,6 +119,7 @@ html {
         transparent 1px
     );
     background-size: 20px 20px;
+    scrollbar-gutter: stable;
 
     /* Remove CSS dots when 3D background is enabled (dots rendered in Three.js) */
     &.canvas-3d-active {
