@@ -331,7 +331,8 @@ export function createCMYKShaderUniforms(config = BEAN_CONFIG, isMobile = false)
     breatheSpeed: { value: config.cmykBreatheSpeed },
     breatheWaveFreq: { value: config.cmykBreatheWaveFreq },
     rotationSpeed: { value: config.cmykRotationSpeed },
-    verticalWave: { value: isMobile ? 1.0 : 0.0 }
+    verticalWave: { value: isMobile ? 1.0 : 0.0 },
+    multiplyBlend: { value: config.cmykMultiplyBlend ? 1.0 : 0.0 }
   };
 }
 
@@ -353,6 +354,7 @@ export const CMYKShaderFragmentShader = `
   uniform float breatheWaveFreq;
   uniform float rotationSpeed;
   uniform float verticalWave;
+  uniform float multiplyBlend;
   varying vec2 vUv;
 
   const float TAU = 6.28318530718;
@@ -380,7 +382,26 @@ export const CMYKShaderFragmentShader = `
     vec3 cyan = vec3(0.0, 1.0, 1.0);
     vec3 magenta = vec3(1.0, 0.0, 1.0);
     vec3 yellow = vec3(1.0, 1.0, 0.0);
-    vec3 fringes = cyan * cyanEdge + magenta * magentaEdge + yellow * yellowEdge;
+
+    // Blend modes for fringes
+    vec3 fringes;
+    if (multiplyBlend > 0.5) {
+      // Subtractive CMY mixing (like real ink/print)
+      // Each CMY color absorbs its RGB complement:
+      // Cyan absorbs Red, Magenta absorbs Green, Yellow absorbs Blue
+      fringes = vec3(
+        1.0 - cyanEdge,      // R: cyan removes red
+        1.0 - magentaEdge,   // G: magenta removes green
+        1.0 - yellowEdge     // B: yellow removes blue
+      );
+      // Where no edges exist, make black (matches additive transparency)
+      float hasEdge = step(0.001, cyanEdge + magentaEdge + yellowEdge);
+      fringes *= hasEdge;
+    } else {
+      // Additive blend: bright RGB mixing (original behavior)
+      fringes = cyan * cyanEdge + magenta * magentaEdge + yellow * yellowEdge;
+    }
+
     float fringeAlpha = max(max(cyanEdge, magentaEdge), yellowEdge);
     vec3 finalColor = mix(fringes, center.rgb, center.a);
     float finalAlpha = max(center.a, fringeAlpha * 0.85);

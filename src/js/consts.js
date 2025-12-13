@@ -79,6 +79,7 @@ export const BEAN_CONFIG = {
   cmykBreatheSpeed: 0.8,
   cmykBreatheWaveFreq: 0.5,
   cmykRotationSpeed: 0.4,
+  cmykMultiplyBlend: false,
 };
 
 // ============================================

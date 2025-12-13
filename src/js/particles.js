@@ -304,6 +304,7 @@ function syncUniforms() {
   cmykPass.uniforms.breatheEnabled.value = CONFIG.cmykBreatheEnabled ? 1.0 : 0.0;
   cmykPass.uniforms.breatheIntensity.value = CONFIG.cmykBreatheIntensity;
   cmykPass.uniforms.breatheSpeed.value = CONFIG.cmykBreatheSpeed;
+  cmykPass.uniforms.multiplyBlend.value = CONFIG.cmykMultiplyBlend ? 1.0 : 0.0;
 }
 
 // Helper to update a uniform on all bean materials (shared + cloned in blend mode)
@@ -745,6 +746,9 @@ function setupGUI() {
   cmykSub.add(CONFIG, 'cmykBreatheWaveFreq', 0.5, 5, 0.25).name('Wave Frequency').onChange(v => {
     cmykPass.uniforms.breatheWaveFreq.value = v;
   });
+  cmykSub.add(CONFIG, 'cmykMultiplyBlend').name('Multiply Blend').onChange(v => {
+    cmykPass.uniforms.multiplyBlend.value = v ? 1.0 : 0.0;
+  });
   addResetButton(cmykSub, () => {
     cmykPass.uniforms.offset.value = CONFIG.cmykOffset;
     cmykPass.uniforms.rotationSpeed.value = CONFIG.cmykRotationSpeed;
@@ -752,6 +756,7 @@ function setupGUI() {
     cmykPass.uniforms.breatheIntensity.value = CONFIG.cmykBreatheIntensity;
     cmykPass.uniforms.breatheSpeed.value = CONFIG.cmykBreatheSpeed;
     cmykPass.uniforms.breatheWaveFreq.value = CONFIG.cmykBreatheWaveFreq;
+    cmykPass.uniforms.multiplyBlend.value = CONFIG.cmykMultiplyBlend ? 1.0 : 0.0;
   });
 
   // ============================================
