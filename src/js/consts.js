@@ -238,8 +238,8 @@ export const BACKGROUND_BEANS_CONFIG = {
   depthMin: -4,
   depthMax: 5,
   // Scale range
-  scaleMin: 0.08,
-  scaleMax: 0.35,
+  scaleMin: 0.2,
+  scaleMax: 0.7,
   // Animation (slower than landing page)
   driftSpeed: 0.05,
   rotationSpeed: 0.7,
